@@ -1,0 +1,777 @@
+================================================================================
+                    SHOP LOCAL MARKETPLACE - SPRINT PLAN
+                         Development Milestones & Guidelines
+================================================================================
+
+Date: February 12, 2026
+Estimated Pace: 10-15 hours/week
+Reference Docs:
+  - Shop_Local_Marketplace_Overview.txt (project overview & business context)
+  - shop_local_schema.sql (database schema)
+  - shop_local_data_model_overview.txt (data model decisions & API outline)
+
+================================================================================
+  TECH STACK
+================================================================================
+
+Frontend:        Angular (TypeScript) — two separate apps
+Backend API:     Node.js (TypeScript) with Express
+Database:        Supabase (PostgreSQL + Auth + Storage)
+Payments:        Stripe Connect (marketplace model)
+Email:           TBD — SendGrid, Postmark, or Resend
+Integrations:    ChamberMaster/GrowthZone API, Shopify API, Square API
+Hosting:         TBD
+
+Two Frontend Applications:
+  1. Consumer Marketplace — public-facing, chamber-branded shopping experience
+  2. Merchant Portal — login-required dashboard for merchants + chamber admins
+
+Both apps share one Node.js API layer and one Supabase database.
+
+
+================================================================================
+  SPRINT 0 — PROJECT SCAFFOLDING (Week 1-2)
+================================================================================
+
+Goal: Get the development environment set up, repos created, and the
+foundation in place so actual feature work can begin immediately.
+
+Tasks:
+  [ ] Create monorepo or multi-repo structure:
+      - /marketplace-consumer (Angular app)
+      - /marketplace-portal (Angular app)
+      - /marketplace-api (Node.js/Express API)
+  [ ] Set up Supabase project
+      - Run shop_local_schema.sql to create all tables
+      - Configure Auth (email/password provider)
+      - Create storage buckets: chamber-assets, merchant-assets, product-images
+      - Set up Row-Level Security policies (basic read/write per role)
+  [ ] Set up Node.js API project
+      - Express + TypeScript boilerplate
+      - Supabase client library configured
+      - Environment variables for Supabase URL, anon key, service role key
+      - Basic health check endpoint
+  [ ] Set up both Angular projects
+      - Angular CLI scaffold
+      - Supabase client library
+      - Basic routing structure
+      - Shared environment config
+  [ ] Set up Stripe account
+      - Register for Stripe Connect (marketplace/platform account)
+      - Get test API keys
+      - Install Stripe SDK in API project
+  [ ] Set up version control and basic CI
+      - Git repos initialized
+      - README with setup instructions
+
+Deliverable: All three projects run locally, connect to Supabase, and the
+database schema is deployed. Nothing user-facing yet.
+
+Definition of Done: A developer (or AI agent) can clone the repos, run
+npm install and npm start, and hit a /health endpoint that returns OK.
+
+
+================================================================================
+  SPRINT 1 — CHAMBER ADMIN ONBOARDING (Week 3-4)
+================================================================================
+
+Goal: A chamber admin can sign up, create their chamber, and configure
+basic branding. This is the first thing that has to happen before anything
+else works — a chamber must exist.
+
+Tables involved: chambers, profiles
+
+Tasks:
+  PORTAL APP (Angular):
+  [ ] Chamber admin registration page
+      - Email/password signup via Supabase Auth
+      - On signup, profile record created with role = 'chamber_admin'
+  [ ] Chamber admin login page
+  [ ] Chamber setup wizard (first login flow):
+      - Step 1: Chamber name, city, state, contact info
+      - Step 2: ChamberMaster connection (association ID, API key, base URL)
+      - Step 3: Branding (logo upload, primary color, accent color, tagline,
+        optional hero image)
+      - Step 4: Review and save
+  [ ] Chamber admin dashboard (shell/layout only at this point)
+      - Sidebar navigation
+      - Chamber name + logo in header
+      - Placeholder cards for: member roster, claim requests, stats
+
+  API (Node.js):
+  [ ] POST /api/chambers — create a new chamber
+  [ ] PUT /api/chambers/:id — update chamber details
+  [ ] POST /api/chambers/:id/branding — upload logo/hero image to Supabase Storage
+  [ ] GET /api/chambers/:id — get chamber details
+
+  SUPABASE:
+  [ ] Storage bucket policies for chamber-assets (public read, admin write)
+  [ ] RLS: chamber_admin can only edit their own chamber
+
+Deliverable: A chamber admin can register, create the Cullman chamber,
+upload a logo, pick colors, and see their dashboard.
+
+Definition of Done: Chamber record exists in database with branding config.
+Dashboard renders with the chamber's logo and colors applied.
+
+
+================================================================================
+  SPRINT 2 — CHAMBERMASTER SYNC & MEMBER ROSTER (Week 5-6)
+================================================================================
+
+Goal: Connect to ChamberMaster API, pull down the member roster, and
+display it in the chamber admin dashboard so they can see who's eligible
+to onboard.
+
+Tables involved: chambermaster_members, sync_log
+
+Tasks:
+  API (Node.js):
+  [ ] ChamberMaster API integration service
+      - Authenticate with API key
+      - GET /api/associations({ID})/members/ with status filtering
+      - Map API response to chambermaster_members table format
+      - Handle pagination if the API paginates
+  [ ] POST /api/chambers/:id/sync — trigger a manual sync
+      - Pull all members with status = Active (code 2)
+      - Upsert into chambermaster_members table
+      - Log results to sync_log table
+      - Update chambers.chambermaster_last_sync_at
+  [ ] GET /api/chambers/:id/members — list synced members with filtering
+      - Filter by: status, is_claimed, search by business name
+      - Pagination support
+  [ ] GET /api/chambers/:id/sync-status — return last sync info
+
+  PORTAL APP (Angular):
+  [ ] Member Roster page in chamber admin dashboard
+      - Table/list of all synced members
+      - Columns: business name, contact, email, phone, category, status
+      - Visual indicator for claimed vs unclaimed
+      - Search/filter bar
+  [ ] "Sync Now" button that triggers manual sync
+      - Loading state while sync runs
+      - Success/error toast notification
+  [ ] Sync history panel (last sync time, members added/updated)
+
+  SCHEDULED JOB:
+  [ ] Nightly ChamberMaster sync cron job
+      - Runs for all chambers where chambermaster_sync_enabled = true
+      - Updates member statuses (catches lapses/renewals)
+      - Logs all sync activity
+      - The membership lapse trigger in the DB handles auto-deactivation
+
+Deliverable: Chamber admin clicks "Sync Now," the system pulls 400+
+members from Cullman's ChamberMaster, and they appear in the roster.
+
+Definition of Done: Member roster displays in dashboard. Nightly sync
+runs on schedule. Membership status changes are tracked.
+
+IMPORTANT NOTE FOR AGENT: The ChamberMaster API documentation is thin.
+You may need to explore the API interactively. Start with the base URL
+format: http://secure2.chambermaster.com/api/associations({Customer_ID})/
+and work from there. If the API requires a paid add-on, flag this as a
+blocker — we may need to contact engagement@growthzone.com.
+
+
+================================================================================
+  SPRINT 3 — MERCHANT ONBOARDING & CLAIM FLOW (Week 7-9)
+================================================================================
+
+Goal: A business owner can click an invitation link, claim their business
+from the ChamberMaster roster, and get approved by the chamber admin.
+This is the critical onboarding path.
+
+Tables involved: profiles, claim_requests, merchants, chambermaster_members
+
+Tasks:
+  PORTAL APP (Angular):
+  [ ] Merchant landing/invitation page
+      - Explains what the platform is and why they should join
+      - "Get Started" button leads to registration
+  [ ] Merchant registration
+      - Email/password signup via Supabase Auth
+      - Profile created with role = 'merchant'
+  [ ] Business claim flow (post-registration):
+      - Step 1: Select your chamber (dropdown of active chambers)
+      - Step 2: Search for your business in the synced roster
+        - Search by business name (fuzzy match against chambermaster_members)
+        - Display matching businesses with address/phone for confirmation
+      - Step 3: Select your business and submit claim
+        - Captures: contact name, email, phone, optional message
+        - Creates claim_request record with status = 'pending'
+      - Step 4: "Thank you" page explaining the chamber will review
+  [ ] Merchant dashboard (post-approval, shell for now)
+      - Sidebar: Products, Orders, Settings, Payouts
+      - Banner if status is 'pending': "Your account is under review"
+      - Banner if Stripe not connected: "Connect payment account to start selling"
+
+  CHAMBER ADMIN — CLAIM MANAGEMENT:
+  [ ] Claim Requests page in chamber admin dashboard
+      - List of pending claims
+      - Each shows: business name (from roster), claimant name/email/phone,
+        message, date submitted
+      - Side-by-side: roster data vs claimant data for easy comparison
+      - "Approve" button → creates merchant record, links to CM member,
+        sends approval email, sets cm_member.is_claimed = true
+      - "Deny" button → prompts for reason, sends denial email
+  [ ] Notification badge on sidebar when new claims arrive
+
+  API (Node.js):
+  [ ] POST /api/claims — submit a claim request
+      - Validates that the CM member exists and isn't already claimed
+  [ ] GET /api/claims?chamber_id=X — list claims for a chamber
+  [ ] POST /api/claims/:id/approve — approve claim
+      - Creates merchant record from CM member data
+      - Updates profile with merchant_id
+      - Updates cm_member.is_claimed = true
+      - Sends approval email to claimant
+      - Creates notification for merchant
+  [ ] POST /api/claims/:id/deny — deny claim
+      - Sends denial email with reason
+  [ ] GET /api/merchants/me — get current merchant's record
+
+  EMAIL:
+  [ ] Set up email service (SendGrid/Postmark/Resend)
+  [ ] Email templates:
+      - Claim approved: "Welcome to Shop Local! Start adding products."
+      - Claim denied: "Your claim was not approved. Reason: {reason}"
+      - (Future: invitation email from chamber to members)
+
+Deliverable: Full onboarding loop works. Business owner registers, claims
+their listing, chamber admin approves, merchant account is created.
+
+Definition of Done: A test merchant can go from invitation link to approved
+merchant with a dashboard. Chamber admin can see and act on all claims.
+
+
+================================================================================
+  SPRINT 4 — STRIPE CONNECT & MERCHANT PAYMENTS (Week 10-11)
+================================================================================
+
+Goal: Merchants can connect their Stripe account so they can receive
+payments. This must happen before products can be sold.
+
+Tables involved: merchants (stripe fields)
+
+Tasks:
+  API (Node.js):
+  [ ] Stripe Connect integration service
+      - Create connected account (Standard or Express — recommend Express
+        for simplicity with small business owners)
+      - Generate onboarding link (Account Links API)
+      - Handle onboarding return/refresh URLs
+      - Verify account status via webhook
+  [ ] POST /api/stripe/onboard — create connected account + return onboarding URL
+  [ ] GET /api/stripe/callback — handle return from Stripe onboarding
+      - Update merchant.stripe_account_id
+      - Update merchant.stripe_onboarding_complete
+  [ ] POST /api/stripe/webhook — handle Stripe events
+      - account.updated → update payouts_enabled status
+      - Handle other relevant Connect events
+  [ ] GET /api/merchants/:id/stripe-status — check if Stripe is fully set up
+
+  PORTAL APP (Angular):
+  [ ] Stripe Connect onboarding in merchant dashboard
+      - Prominent "Set Up Payments" card if Stripe not connected
+      - Clicking opens Stripe's hosted onboarding (redirect)
+      - On return, show success/pending state
+      - Dashboard indicator: green check if payments enabled,
+        yellow warning if still pending verification
+  [ ] Merchant settings page
+      - Business info (editable)
+      - Stripe account status
+      - Shipping/fulfillment options:
+        - Toggle: local pickup (on/off)
+        - Toggle: flat rate shipping (on/off) + amount input
+        - Toggle: standard shipping (on/off)
+        - Shipping notes text field
+
+Deliverable: A merchant can click through Stripe's onboarding, connect
+their bank account, and be ready to receive payments.
+
+Definition of Done: Merchant's Stripe connected account is active.
+stripe_onboarding_complete = true. Shipping options are configured.
+
+IMPORTANT NOTE FOR AGENT: Use Stripe Express accounts, not Standard.
+Express accounts give Stripe a hosted dashboard for the merchant to manage
+payouts, reducing what we need to build. Test everything in Stripe test
+mode. The webhook endpoint must verify Stripe's signature.
+
+
+================================================================================
+  SPRINT 5 — MANUAL PRODUCT MANAGEMENT (Week 12-14)
+================================================================================
+
+Goal: Merchants can manually add, edit, and manage products through
+the portal. This is the primary product onboarding path for most
+merchants who don't have Shopify/Square.
+
+Tables involved: products, product_images, categories
+
+Tasks:
+  PORTAL APP (Angular):
+  [ ] Product list page in merchant dashboard
+      - Grid/table of all merchant's products
+      - Shows: image thumbnail, name, price, quantity, status
+      - Quick actions: edit, archive, duplicate
+      - Filter by: status, category
+      - Sort by: name, price, date added, quantity
+  [ ] Add Product page
+      - Product name (required)
+      - Description (rich text or markdown)
+      - Short description (used in cards/search results)
+      - Category dropdown (from categories table)
+      - Price (required)
+      - Compare-at price (optional, for showing "sale" pricing)
+      - Quantity (required if tracking inventory)
+      - Low stock threshold (default 5)
+      - SKU (optional)
+      - Weight (optional, for future shipping calc)
+      - Tags (multi-select or freeform chips)
+      - Image upload (multiple, drag-and-drop, reorder)
+        - First image = primary
+        - Upload to Supabase Storage product-images bucket
+        - Recommend image size/format guidelines shown to user
+      - Save as draft or publish immediately
+  [ ] Edit Product page (same form, pre-populated)
+  [ ] Product image management
+      - Upload multiple images
+      - Drag to reorder
+      - Set primary image
+      - Delete individual images
+  [ ] Inventory management (simple)
+      - Quantity field on product form
+      - Quick-edit quantity from product list (inline edit)
+      - Low stock indicator (yellow/red badge)
+
+  API (Node.js):
+  [ ] Full CRUD for products
+      - POST /api/products — create product
+      - GET /api/products?merchant_id=X — list merchant's products
+      - GET /api/products/:id — get single product
+      - PUT /api/products/:id — update product
+      - DELETE /api/products/:id — archive product (soft delete)
+  [ ] Image upload endpoint
+      - POST /api/products/:id/images — upload image(s)
+      - PUT /api/products/:id/images/reorder — update display_order
+      - DELETE /api/products/images/:id — delete image
+  [ ] Slug generation (auto-generate from product name, handle collisions)
+  [ ] Inventory update endpoint
+      - PUT /api/products/:id/inventory — quick quantity update
+
+  SUPABASE:
+  [ ] Storage bucket policies for product-images (public read, merchant write own)
+  [ ] RLS: merchants can only CRUD their own products
+
+Deliverable: A merchant can add products with photos, descriptions, and
+pricing. Products are stored and ready to display on the consumer site.
+
+Definition of Done: Test merchant has 5+ products with images listed in
+their dashboard. Products exist in database with status = 'active'.
+
+DESIGN GUIDANCE FOR AGENT: The product add form should be dead simple.
+Think Facebook Marketplace level ease of use. These are non-technical
+small business owners. Big image drop zone at the top, minimal required
+fields, save button always visible. Don't overwhelm with optional fields —
+use an "Advanced" expandable section for SKU, weight, tags, etc.
+
+
+================================================================================
+  SPRINT 6 — CONSUMER MARKETPLACE (Week 15-18)
+================================================================================
+
+Goal: Build the public-facing consumer site where shoppers can browse
+products and stores. This is the "Shop Local" experience that the chamber
+links to from their website.
+
+Tables involved: chambers, merchants, products, product_images, categories
+
+Tasks:
+  CONSUMER APP (Angular):
+  [ ] Dynamic chamber-branded layout
+      - Read chamber config (logo, colors, tagline, hero image) based on
+        subdomain or route parameter
+      - Apply branding to header, accent colors, footer
+      - If chamber not found or not launched, show "Coming Soon" page
+  [ ] Homepage
+      - Hero section with chamber branding + tagline
+      - Featured products carousel/grid
+      - Browse by category section
+      - "Meet the Stores" section (merchant highlights)
+  [ ] Category browse page
+      - Grid of products filtered by category
+      - Products from ALL merchants in this chamber, mixed together
+      - Sort by: newest, price low-high, price high-low
+      - Pagination or infinite scroll
+  [ ] Search
+      - Search bar in header
+      - Searches product names, descriptions, tags, merchant names
+      - Results page with product cards
+  [ ] Product detail page
+      - Image gallery (swipeable on mobile)
+      - Product name, description, price
+      - Quantity selector
+      - "Add to Cart" button
+      - Store info card (merchant name, logo, link to store page)
+      - Fulfillment options available for this merchant
+  [ ] Store directory page
+      - Grid of all active merchants in the chamber
+      - Each card: logo, name, category, product count
+  [ ] Individual store page
+      - Merchant banner/logo/description
+      - Grid of all their active products
+  [ ] Shopping cart
+      - Single-merchant cart (if user adds from a different store,
+        warn that this will start a new cart OR keep carts separate)
+      - Cart shows: items, quantities, subtotal
+      - Fulfillment type selection (based on merchant's options)
+      - "Proceed to Checkout" button
+  [ ] Mobile responsive — all pages must work well on mobile
+
+  API (Node.js):
+  [ ] Public product endpoints (no auth required):
+      - GET /api/public/chambers/:slug — chamber info + branding
+      - GET /api/public/chambers/:slug/products — all active products
+        - Filter by: category, search query, merchant
+        - Sort by: newest, price, featured
+        - Pagination
+      - GET /api/public/chambers/:slug/merchants — active merchants
+      - GET /api/public/merchants/:slug — single merchant + their products
+      - GET /api/public/products/:id — single product detail
+      - GET /api/public/categories — list all categories
+
+Deliverable: A consumer can visit the Cullman marketplace, browse products
+by category or store, search for items, view product details, and add
+items to a cart.
+
+Definition of Done: Consumer site renders with Cullman branding. Products
+from test merchants are browsable. Cart works with single-store constraint.
+Site is mobile responsive.
+
+NOTE: This sprint does NOT include checkout. Cart only. Checkout is next.
+
+DESIGN GUIDANCE FOR AGENT: The consumer site must look premium — this is
+what the chamber president will judge the platform on. Clean typography,
+generous whitespace, high-quality product card grid, smooth transitions.
+Look at Myti.com for the quality bar. The chamber branding should feel
+natural, not like a generic template with a logo swapped in. Category
+browsing should mix products from multiple stores — this is a marketplace,
+not a directory of separate stores.
+
+
+================================================================================
+  SPRINT 7 — CHECKOUT & ORDER FLOW (Week 19-21)
+================================================================================
+
+Goal: Customers can complete a purchase. Money flows from customer to
+merchant (minus platform fee) via Stripe Connect. Merchant receives
+order notification.
+
+Tables involved: orders, order_items, products (inventory), merchants
+
+Tasks:
+  CONSUMER APP (Angular):
+  [ ] Checkout page
+      - Order summary (items, quantities, prices)
+      - Fulfillment selection (if merchant offers multiple options)
+      - Shipping address form (if shipping selected)
+      - Customer info: name, email, phone
+      - Shipping cost displayed
+      - Tax amount displayed (implementation TBD based on accountant guidance)
+      - Order total
+      - Stripe payment element (Stripe.js / Elements)
+      - "Place Order" button
+  [ ] Order confirmation page
+      - Order number
+      - Summary of what was ordered
+      - Fulfillment details (pickup location OR shipping address)
+      - "You'll receive an email confirmation"
+  [ ] Guest checkout support (no account required to buy)
+  [ ] Optional: account creation at checkout
+
+  PORTAL APP (Angular):
+  [ ] Orders page in merchant dashboard
+      - List of all orders, newest first
+      - Filter by: status (pending, confirmed, shipped, etc.)
+      - Each row: order number, customer name, total, status, date
+  [ ] Order detail page
+      - Customer info
+      - Items ordered
+      - Fulfillment type
+      - Shipping address (if applicable)
+      - Payment status
+      - Action buttons based on current status:
+        - Pending → "Confirm Order"
+        - Confirmed + shipping → "Mark as Shipped" (enter tracking number)
+        - Confirmed + pickup → "Ready for Pickup"
+        - Any → "Cancel Order" / "Refund Order"
+  [ ] Order notifications
+      - In-app notification when new order arrives
+      - Sound/visual alert on dashboard
+
+  API (Node.js):
+  [ ] POST /api/orders — create order
+      - Validate product availability (check stock)
+      - Calculate subtotal, shipping, tax, platform fee
+      - Create Stripe PaymentIntent with transfer to connected account
+        - amount: order total
+        - application_fee_amount: platform fee
+        - transfer_data.destination: merchant's stripe_account_id
+      - Create order + order_items records
+      - Inventory auto-decrements via DB trigger
+      - Send order confirmation email to customer
+      - Send new order notification email to merchant
+      - Create in-app notification for merchant
+  [ ] POST /api/orders/:id/confirm — merchant confirms
+  [ ] POST /api/orders/:id/ship — merchant adds tracking
+  [ ] POST /api/orders/:id/ready-for-pickup — merchant marks ready
+  [ ] POST /api/orders/:id/cancel — cancel order
+      - Restore inventory
+      - Refund via Stripe if payment was captured
+  [ ] POST /api/orders/:id/refund — process refund
+      - Full or partial refund through Stripe Connect
+      - Update order status
+  [ ] POST /api/stripe/webhook — handle payment events
+      - payment_intent.succeeded → confirm payment received
+      - payment_intent.payment_failed → handle failure
+      - charge.dispute.created → notify merchant + platform admin
+
+  EMAIL TEMPLATES:
+  [ ] Order confirmation (to customer)
+  [ ] New order notification (to merchant)
+  [ ] Order shipped (to customer, with tracking link)
+  [ ] Ready for pickup (to customer)
+  [ ] Order cancelled (to customer)
+  [ ] Refund processed (to customer)
+
+Deliverable: Complete purchase flow from cart to order confirmation.
+Merchant receives and manages orders from their dashboard.
+
+Definition of Done: A test purchase completes in Stripe test mode.
+Order appears in merchant dashboard. Customer receives confirmation email.
+Merchant can confirm, ship/mark ready, and refund orders.
+
+IMPORTANT NOTE FOR AGENT: Use Stripe PaymentIntents with automatic
+transfer to the connected account. Set the application_fee_amount to
+the platform's percentage. Use Stripe.js Elements for PCI compliance —
+never handle raw card numbers on our server. All Stripe API calls happen
+server-side in the Node API only.
+
+
+================================================================================
+  SPRINT 8 — SHOPIFY INTEGRATION (Week 22-24)
+================================================================================
+
+Goal: Merchants with existing Shopify stores can connect them and
+automatically import their product catalog.
+
+Tables involved: merchant_integrations, products, product_images
+
+Tasks:
+  API (Node.js):
+  [ ] Shopify OAuth flow
+      - GET /api/integrations/shopify/auth?merchant_id=X
+        - Redirect to Shopify OAuth consent screen
+      - GET /api/integrations/shopify/callback
+        - Exchange code for access token
+        - Store in merchant_integrations table
+  [ ] Shopify product import service
+      - Fetch all products via Shopify Admin API (GraphQL)
+      - Map Shopify products to our products table schema
+      - Download and re-upload product images to our Supabase Storage
+      - Set source = 'shopify', store external_id
+      - Handle variants (map to individual products for now)
+  [ ] POST /api/integrations/shopify/sync — manual full sync
+  [ ] Shopify webhook registration
+      - products/update → update product in our DB
+      - products/delete → archive product in our DB
+      - inventory_levels/update → update quantity
+  [ ] POST /api/webhooks/shopify — incoming webhook handler
+      - Verify webhook signature
+      - Route to appropriate handler
+
+  PORTAL APP (Angular):
+  [ ] "Connect Shopify" option in merchant dashboard
+      - Under Products or Settings section
+      - Button that initiates OAuth flow
+      - After connection: show sync status, last sync time, products synced count
+  [ ] Connected integrations management
+      - View connected stores
+      - "Sync Now" manual trigger
+      - "Disconnect" option
+  [ ] Visual indicator on products that are Shopify-synced
+      - Badge or icon showing source
+      - These products have limited editing (synced fields are read-only)
+
+Deliverable: A merchant with a Shopify store can connect it and see their
+products automatically appear on the marketplace.
+
+Definition of Done: OAuth flow completes successfully. Products import
+with images. Webhook updates reflect on the platform within seconds.
+
+NOTE FOR AGENT: Use Shopify's GraphQL Admin API, not the REST API (which
+is legacy as of October 2024). You'll need to create a Shopify app in the
+Partners dashboard to get API credentials. For development, use a Shopify
+development store.
+
+
+================================================================================
+  SPRINT 9 — SQUARE INTEGRATION (Week 25-26)
+================================================================================
+
+Goal: Same as Sprint 8 but for Square. Merchants using Square POS can
+connect and import their catalog.
+
+Tables involved: merchant_integrations, products, product_images
+
+Tasks:
+  [ ] Square OAuth flow (similar pattern to Shopify)
+  [ ] Square catalog import service
+      - Fetch items via Square Catalog API
+      - Map to our products schema
+      - Handle item variations
+  [ ] Square webhook setup for inventory changes
+  [ ] "Connect Square" option in merchant portal
+  [ ] Sync management UI
+
+Deliverable: Square merchants can connect and import products.
+
+Definition of Done: OAuth works. Products import. Inventory stays synced.
+
+NOTE: Square's API structure is different from Shopify's. Items have
+"variations" which are similar to Shopify variants. A single Square item
+may map to multiple products in our system. Square also uses "locations"
+so we need to ask which location to sync from.
+
+
+================================================================================
+  SPRINT 10 — POLISH, NOTIFICATIONS & LAUNCH PREP (Week 27-29)
+================================================================================
+
+Goal: Everything needed to actually launch the Cullman pilot. Polish the
+UI, build out the notification system, add analytics basics, and prepare
+for real users.
+
+Tasks:
+  NOTIFICATIONS:
+  [ ] Complete email notification system
+      - Chamber invitation emails (chamber admin sends to members)
+      - Low stock alerts (to merchant)
+      - Payout notifications (from Stripe webhook)
+      - Weekly summary email to chamber admin (adoption stats)
+  [ ] In-app notification center
+      - Bell icon in portal header with unread count
+      - Dropdown showing recent notifications
+      - Mark as read / mark all as read
+
+  CHAMBER ADMIN DASHBOARD (final):
+  [ ] Adoption metrics
+      - Total members vs onboarded merchants (bar chart or progress)
+      - Products listed count
+      - Orders placed / revenue generated (aggregate)
+  [ ] "Launch" toggle
+      - Chamber admin can flip their marketplace live when ready
+      - Checks product_threshold before allowing launch
+  [ ] Invitation tool
+      - Generate invitation link with chamber pre-selected
+      - Bulk email option (or provide CSV of emails to send to)
+
+  CONSUMER SITE POLISH:
+  [ ] "Coming Soon" page for chambers not yet launched
+  [ ] SEO basics (meta tags, Open Graph, page titles)
+  [ ] Performance optimization (image lazy loading, pagination)
+  [ ] 404 and error pages
+  [ ] Footer with terms of service, privacy policy, contact links
+
+  MERCHANT PORTAL POLISH:
+  [ ] Onboarding progress indicator (claim → stripe → products → live)
+  [ ] Empty states for all pages (no products yet, no orders yet)
+  [ ] Mobile-friendly portal (responsive or at minimum usable on tablet)
+
+  LEGAL:
+  [ ] Terms of Service page
+  [ ] Privacy Policy page
+  [ ] Merchant Agreement (accepted during onboarding)
+  [ ] Return/Refund policy template
+
+  INFRASTRUCTURE:
+  [ ] Production Supabase project (separate from dev)
+  [ ] Production Stripe account (switch from test to live)
+  [ ] Domain setup (custom domain or subdomains)
+  [ ] SSL certificates
+  [ ] Error monitoring (Sentry or similar)
+  [ ] Basic logging
+
+Deliverable: Platform is ready for real users in Cullman.
+
+Definition of Done: Chamber admin can launch the marketplace. At least
+10 test merchants with products are listed. A real purchase can complete
+end-to-end. All critical emails send correctly.
+
+
+================================================================================
+  POST-LAUNCH / PHASE 2 BACKLOG (Not Scheduled)
+================================================================================
+
+These items are tracked but not scheduled into sprints. They get
+prioritized based on real user feedback after Cullman launches.
+
+  - AI-assisted product listings (Claude Vision API for descriptions)
+  - AI-assisted image quality check
+  - WooCommerce integration (Sprint 9 pattern)
+  - Product variants (size, color)
+  - Advanced inventory management
+  - Customer accounts (order history, saved addresses)
+  - Reviews and ratings
+  - Featured products / promotions
+  - Analytics dashboard for merchants
+  - Multi-chamber admin (manage multiple chambers)
+  - White-label multi-tenant subdomain routing
+  - Push notifications (mobile)
+  - Advanced search (Algolia or Meilisearch)
+  - Discount codes / promotions
+  - Social sharing
+  - Alabama statewide rollout plan
+
+
+================================================================================
+  GUIDELINES FOR AI AGENT (CLAUDE CODE / OPEN CLAW)
+================================================================================
+
+1. ALWAYS reference the database schema (shop_local_schema.sql) before
+   creating any new tables, columns, or relationships. The schema is the
+   source of truth for the data model.
+
+2. ALWAYS reference the data model overview for design decisions. Don't
+   re-decide things that have already been decided (single-store cart,
+   soft validation, etc.).
+
+3. TypeScript everywhere. Both Angular apps and the Node API must use
+   TypeScript with strict mode. No 'any' types unless absolutely necessary.
+
+4. Keep the merchant portal simple. The target users are non-technical
+   small business owners. Every screen should be intuitive without
+   documentation.
+
+5. Consumer site must look premium. This is NOT a template — it needs
+   custom, polished design that a chamber president would be proud to
+   link to from their website.
+
+6. Security first on payments. Never handle raw card data. All Stripe
+   operations happen server-side. Verify all webhook signatures.
+
+7. Test with real-world scenarios. A merchant with 3 products. A merchant
+   with 200 products imported from Shopify. A chamber with 5 merchants.
+   A chamber with 80 merchants. Edge cases matter.
+
+8. Mobile responsive is not optional. Many shoppers AND merchants will
+   be on their phones. The consumer site especially must be mobile-first.
+
+9. Error handling matters. External APIs (ChamberMaster, Shopify, Square,
+   Stripe) will fail. Handle failures gracefully, log them, and surface
+   clear error messages. Never show a raw stack trace to a user.
+
+10. When in doubt, keep it simple and ship. A working simple feature is
+    better than a half-built complex one. We can always iterate.
+
+================================================================================

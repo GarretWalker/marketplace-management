@@ -1,0 +1,278 @@
+================================================================================
+                    SHOP LOCAL MARKETPLACE - PROJECT OVERVIEW
+                         Chamber Commerce E-Commerce Platform
+================================================================================
+
+Date: February 11, 2026
+Author: Garret
+Status: Concept / Planning Phase
+
+================================================================================
+  1. THE IDEA
+================================================================================
+
+Build a full e-commerce marketplace website that shows only products from
+members of a specific chamber of commerce. The chamber (starting with Cullman
+Area Chamber of Commerce) would have a "Shop Local" link on their website that
+takes consumers to a marketplace showing physical products from their members
+only.
+
+The chamber president originated this idea after seeing existing solutions and
+finding them lacking in design quality and ChamberMaster/GrowthZone integration.
+
+The vision extends beyond Cullman — this could be used by all chambers across
+Alabama as a white-label, multi-tenant platform.
+
+================================================================================
+  2. CHAMBERMASTER / GROWTHZONE INTEGRATION
+================================================================================
+
+ChamberMaster (now GrowthZone) is the membership management platform used by
+most chambers of commerce. It handles member directories, events, dues/billing,
+and communications.
+
+API Details:
+- REST-based API
+- Base URL format: http://secure2.chambermaster.com/api/associations({Customer_ID})/
+- Supports OData-style filtering ($filter, $orderby)
+- API access requires a key from GrowthZone (contact: engagement@growthzone.com)
+- API access may be a paid add-on depending on the chamber's edition
+
+Key Endpoints:
+- /api/contacts — contact records
+- /api/memberships/types — membership types
+- /api/memberships/all — all memberships
+- /api/associations({ID})/members/ — members with status filtering
+- /api/associations({ID})/events/details — event data
+
+Member Status Codes:
+- 1: Prospective
+- 2: Active
+- 4: Courtesy
+- 8: NonMember
+- 16: Inactive
+- 32: Deleted
+
+What ChamberMaster Gives Us:
+- Business name, address, phone number
+- Website URL
+- Contact email
+- Membership status
+- Business category
+
+What ChamberMaster Does NOT Give Us:
+- Product catalogs
+- Inventory data
+- Square/Shopify merchant IDs
+- POS system information
+
+================================================================================
+  3. THE CORE CHALLENGE: PRODUCT SOURCING
+================================================================================
+
+ChamberMaster provides member data but NOT product data. There is no automatic
+way to pull a business's inventory using only chamber membership information.
+
+Reality of Local Businesses in Cullman/Rural Alabama:
+- ~33% of rural small businesses rely mostly on in-person sales
+- ~27% of American small businesses don't even have a website
+- Estimated only 10-15% might have a Shopify, Square Online, or similar
+  storefront that could be integrated with
+- Another 20-30% might use Square or Clover as a POS but have no online store
+- Remaining 50-70% are either service businesses (no physical products) or
+  retail businesses with no digital product catalog
+
+Conclusion: POS/storefront API integration is a nice-to-have for the minority
+of businesses that have them, but the primary product onboarding method MUST be
+a manual upload portal.
+
+================================================================================
+  4. PRODUCT ONBOARDING STRATEGY
+================================================================================
+
+No matter what approach is used, there has to be a moment where the business
+owner opts in and connects their store or adds products. This cannot be fully
+automated.
+
+Primary Method — Manual Product Upload Portal:
+- Business owner logs in (invited via chamber)
+- Adds products: name, description, price, photos, quantity
+- Should be dead simple — think Facebook Marketplace level ease
+- Could leverage AI (Claude vision API) to auto-generate product descriptions
+  from photos
+
+Secondary Method — POS/Storefront Integration (for businesses that have them):
+- Shopify, Square, WooCommerce, Clover all require OAuth authorization
+- Business owner clicks "Connect your store" during onboarding
+- Products auto-import and stay synced
+- Only works for the ~10-15% with existing online stores
+
+The Onboarding Flow:
+1. Pull member list from ChamberMaster API
+2. Chamber sends invitation to members (chamber endorsement carries weight)
+3. Business owner clicks link, lands on onboarding page
+4. Either connects existing storefront via OAuth OR manually adds products
+5. Products appear on the marketplace
+
+Critical Insight: The chamber president is the secret weapon for adoption. Her
+endorsement and distribution of invitations carries far more weight than cold
+outreach from an unknown platform.
+
+================================================================================
+  5. EXISTING COMPETITORS
+================================================================================
+
+5a. Shop Where I Live / Member Marketplace Inc.
+    - Most direct competitor, founded 2017
+    - Partners with chambers, Main Street programs, economic development orgs
+    - Full e-commerce marketplace with direct checkout
+    - Shopify & Square integrations for product import
+    - No commission or monthly fees for sellers — 2.9% + $0.30 per order
+    - ~17,000 products across their network
+    - Active in Iowa (650+ businesses, 5,000+ products), Nevada, Wyoming,
+      North Dakota, California, New Mexico, New York, Michigan
+    - NOT currently in Alabama
+    - Generic WordPress/WooCommerce template design
+    - No ChamberMaster integration (manual registration separate from chamber)
+
+5b. Shop Local Digital
+    - More focused on discovery, coupons, and vouchers
+    - Hyper-local marketplace with SEO focus
+    - Less of a direct competitor — more directory/deals than transactions
+
+5c. Member Marketplace Inc. (white-label arm of Shop Where I Live)
+    - Can stand up a marketplace within a day
+    - Standardized non-customized platform
+    - Free and premium tiers available
+
+================================================================================
+  6. COMPETITIVE ADVANTAGES / DIFFERENTIATORS
+================================================================================
+
+The chamber president has already seen existing solutions and rejected them.
+Two specific differentiators she wants:
+
+1. BETTER DESIGN
+   - Existing solutions look like generic 2018 WordPress templates
+   - Building with Angular allows for a modern, polished, premium feel
+   - Custom-built UI rather than off-the-shelf theme
+
+2. CHAMBERMASTER INTEGRATION
+   - No competitor currently integrates with ChamberMaster
+   - Members already in the chamber system — no duplicate registration
+   - Chamber admin visibility into who has onboarded and who hasn't
+   - If a member drops from the chamber, their store can auto-deactivate
+   - Single source of truth for membership status
+
+================================================================================
+  7. REVENUE MODEL
+================================================================================
+
+Primary: 2-3% transaction fee on each purchase
+- No upfront cost to chambers (removes barrier to adoption)
+- No monthly fee for businesses
+- Everyone's incentives are aligned — platform only makes money when
+  members make money
+- On top of Stripe's processing fees
+
+Revenue Projections (rough estimates):
+- Cullman chamber ~400 members
+- If 20% list products (80 businesses)
+- Averaging $2,000/month in platform sales each
+- Monthly GMV: $160,000
+- At 3%: ~$4,800/month from one chamber
+- Alabama has 100+ chambers
+- 20 chambers at similar volume = ~$96,000/month
+
+Optional future additions:
+- Small monthly SaaS fee per chamber ($99-199/month) for infrastructure costs
+- Premium listings or featured product placements
+- Sponsorship/advertising opportunities for larger businesses
+
+================================================================================
+  8. BUSINESS STRUCTURE
+================================================================================
+
+- Completely separate venture (NOT part of Daybreak Hunting)
+- Sole ownership
+- Community-driven mindset — not focused on immediate profit
+- Goal: drive local business first, monetize as it scales
+
+================================================================================
+  9. TECHNICAL ARCHITECTURE
+================================================================================
+
+Proposed Tech Stack:
+- Frontend: Angular (existing expertise)
+- Backend: Node.js (TypeScript) with Express
+- Database: PostgreSQL
+- Payments: Stripe Connect (marketplace model — each merchant gets connected
+  Stripe account, money flows through platform with percentage take)
+- Member Sync: ChamberMaster/GrowthZone API
+- Product Imports: Shopify API, Square API (OAuth-based)
+- Hosting: TBD
+
+Key Technical Considerations:
+- Multi-tenant architecture (each chamber gets branded storefront, one
+  platform underneath)
+- Stripe Connect merchant onboarding is more complex than expected
+- ChamberMaster API documentation appears thin — may hit roadblocks
+- Sales tax collection and remittance
+- Order notification system (email to merchant on purchase)
+- Fulfillment is merchant-handled (Etsy model, not Amazon model)
+
+Scope: Physical products only. No services.
+
+================================================================================
+  10. DEVELOPMENT PHASES & TIMELINE
+================================================================================
+
+Estimated at 10-15 hours/week alongside full-time work.
+
+PHASE 1 — MVP (8-12 weeks)
+- ChamberMaster API integration to pull member lists
+- Business owner onboarding portal (sign up, add products manually)
+- Basic consumer-facing storefront (browse by business, category, search)
+- Stripe Connect for payments
+- Order notification system (email to merchant when order placed)
+- Basic admin dashboard for chamber
+
+PHASE 2 — Polish & Scale (4-8 weeks after MVP)
+- Shopify/Square product import integration
+- Better product management (inventory tracking, variants)
+- White-label theming for other chambers
+- Mobile-responsive refinement
+- AI-assisted product listing (photo to description via Claude API)
+
+PHASE 3 — Multi-Chamber Rollout (ongoing)
+- Multi-tenant admin (each chamber manages their own marketplace)
+- Analytics dashboard for chambers
+- Marketing tools (featured products, promotions)
+- Statewide push through Alabama Association of Chamber of Commerce Executives
+
+================================================================================
+  11. NEXT STEPS
+================================================================================
+
+- [ ] Decide on a name for the platform
+- [ ] Design database schema and data model
+- [ ] Map ChamberMaster API integration points in detail
+- [ ] Design the merchant onboarding flow (UX wireframes)
+- [ ] Set up Stripe Connect account and understand merchant onboarding
+- [ ] Build proof of concept to show chamber president
+- [ ] Get formal commitment / agreement from Cullman chamber
+
+================================================================================
+  12. KEY RISKS & CONSIDERATIONS
+================================================================================
+
+- Business owner adoption: Getting busy, non-technical local business owners
+  to list products is the #1 challenge
+- ChamberMaster API access: May require paid add-on; documentation is thin
+- Transaction volume may start very slow — consumer behavior change is hard
+- Stripe Connect complexity: Merchant onboarding, tax collection, refunds,
+  payouts, compliance
+- Competition: Shop Where I Live could expand to Alabama
+- Time constraint: Building alongside full-time job and job search
+
+================================================================================

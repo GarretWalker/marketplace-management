@@ -1,0 +1,208 @@
+================================================================================
+                    SHOP LOCAL MARKETPLACE - DATA MODEL OVERVIEW
+                         Companion to shop_local_schema.sql
+================================================================================
+
+Date: February 12, 2026
+Status: Initial Schema Design
+
+================================================================================
+  ENTITY RELATIONSHIP SUMMARY
+================================================================================
+
+Chamber
+  ├── has many ChamberMaster Members (synced roster)
+  ├── has many Merchants (approved businesses)
+  ├── has many Orders (all orders placed on their marketplace)
+  ├── has one or more Chamber Admins (via profiles)
+  └── has branding config (logo, colors, tagline)
+
+ChamberMaster Member (synced from API)
+  ├── belongs to a Chamber
+  ├── can be "claimed" by a Profile (business owner)
+  └── links to one Merchant (once approved)
+
+Merchant
+  ├── belongs to a Chamber
+  ├── linked to a ChamberMaster Member
+  ├── has many Products
+  ├── has many Orders
+  ├── has many Integrations (Shopify, Square, etc.)
+  ├── has one Stripe Connect account
+  └── has one or more Profiles (merchant users)
+
+Product
+  ├── belongs to a Merchant
+  ├── belongs to a Category
+  ├── has many Product Images
+  ├── has a source (manual, shopify, square, etc.)
+  └── appears in Order Items
+
+Order
+  ├── belongs to one Merchant (single-store checkout)
+  ├── belongs to one Chamber
+  ├── belongs to a Customer (profile, or guest)
+  ├── has many Order Items
+  └── has Stripe payment references
+
+Profile (extends Supabase Auth)
+  ├── has a role (shopper, merchant, chamber_admin)
+  ├── if merchant: linked to a Merchant record
+  ├── if chamber_admin: linked to a Chamber
+  └── has many Notifications
+
+
+================================================================================
+  KEY DESIGN DECISIONS
+================================================================================
+
+1. SINGLE-STORE CHECKOUT
+   Orders reference one merchant only. No multi-store cart.
+   This simplifies payment splitting, shipping, and fulfillment.
+
+2. PRODUCT SNAPSHOTS IN ORDER ITEMS
+   Order items store product_name, unit_price, and image_url at the
+   time of purchase. This ensures order history remains accurate even
+   if a merchant later changes product details or deletes the product.
+
+3. CHAMBERMASTER MEMBERS AS A SEPARATE TABLE
+   The synced roster from ChamberMaster is kept separate from the
+   merchants table. This allows:
+   - Tracking which members have NOT yet onboarded
+   - Soft validation (chamber admin approves claims)
+   - Clean re-sync without affecting merchant data
+   - The roster is the "truth" for membership status
+
+4. MERCHANT STATUS LIFECYCLE
+   pending → active → (suspended | inactive)
+   - pending: Business owner claimed a listing, awaiting approval
+   - active: Chamber admin approved, merchant can list products
+   - suspended: Manually suspended (policy violation, etc.)
+   - inactive: Auto-deactivated when ChamberMaster membership lapses
+   A database trigger handles auto-deactivation when membership status
+   changes during the nightly ChamberMaster sync.
+
+5. PRODUCT SOURCE TRACKING
+   Every product knows where it came from (manual, shopify, square).
+   This determines how inventory is managed:
+   - manual: Platform is the source of truth, simple quantity field
+   - shopify/square: External system is source of truth, synced via
+     webhooks and periodic polling
+
+6. FLEXIBLE SHIPPING PER MERCHANT
+   Each merchant configures their own fulfillment options:
+   - Local pickup (default on)
+   - Flat rate shipping (merchant sets amount)
+   - Standard shipping (future: calculated rates)
+   Shipping config lives on the merchant, not per-product (for MVP).
+
+7. NOTIFICATIONS TABLE
+   In-app notifications for merchants and chamber admins. This is
+   separate from email notifications (handled by the email service).
+   Types include: new_order, claim_request, low_stock,
+   membership_lapsed, payout_sent, etc.
+
+8. SYNC LOG FOR DEBUGGING
+   Every ChamberMaster sync and integration sync is logged with
+   counts and error messages. Essential for debugging when things
+   go wrong with external APIs.
+
+9. AUTO-INVENTORY MANAGEMENT
+   A database trigger automatically decrements product quantity when
+   an order item is created, and sets product status to out_of_stock
+   when quantity hits zero. This keeps inventory consistent without
+   relying on application code.
+
+10. MEMBERSHIP LAPSE AUTO-DEACTIVATION
+    A database trigger watches for ChamberMaster member status changes.
+    When a member goes from active to inactive/deleted:
+    - Their merchant record is set to inactive
+    - All their active products are archived
+    When a member renews (inactive → active):
+    - Their merchant record is reactivated
+    - Products remain archived (merchant must manually re-enable)
+
+
+================================================================================
+  TABLES NOT INCLUDED (FUTURE PHASES)
+================================================================================
+
+- Product Variants (size, color, etc.) — Phase 2
+- Reviews / Ratings — Phase 2/3
+- Promotions / Discount Codes — Phase 3
+- Analytics / Event Tracking — Phase 3
+- Merchant Payout History — Could use Stripe dashboard initially
+- Wishlists / Saved Items — Nice-to-have
+- Search Index — May use external search (Algolia, Meilisearch) later
+
+
+================================================================================
+  SUPABASE-SPECIFIC NOTES
+================================================================================
+
+Row-Level Security (RLS):
+- Shoppers can only read active products and their own orders
+- Merchants can only CRUD their own products and orders
+- Chamber admins can read all merchants/orders within their chamber
+- Claim requests visible to the requesting user and chamber admins
+
+Storage Buckets:
+- chamber-assets: Logos, hero images (public read)
+- merchant-assets: Store logos, cover images (public read)
+- product-images: Product photos (public read)
+
+Auth:
+- Supabase Auth handles registration, login, password reset
+- Profile record created via database trigger on auth.users insert
+- Role assignment happens during onboarding flow
+
+Realtime (optional):
+- Subscribe to new orders (merchant dashboard)
+- Subscribe to claim requests (chamber admin dashboard)
+- Subscribe to notifications
+
+
+================================================================================
+  API ENDPOINTS OVERVIEW (Node.js Layer)
+================================================================================
+
+These endpoints handle business logic that goes beyond simple CRUD:
+
+ChamberMaster Integration:
+  POST   /api/chambers/:id/sync          — Trigger manual CM sync
+  GET    /api/chambers/:id/sync-status   — Check last sync result
+
+Merchant Onboarding:
+  POST   /api/claims                     — Submit a claim request
+  POST   /api/claims/:id/approve         — Chamber admin approves
+  POST   /api/claims/:id/deny            — Chamber admin denies
+
+Integrations:
+  GET    /api/integrations/shopify/auth   — Start Shopify OAuth
+  GET    /api/integrations/shopify/callback — Handle OAuth callback
+  POST   /api/integrations/shopify/sync   — Manual product sync
+  GET    /api/integrations/square/auth    — Start Square OAuth
+  GET    /api/integrations/square/callback — Handle OAuth callback
+  POST   /api/integrations/square/sync    — Manual product sync
+
+Stripe Connect:
+  POST   /api/stripe/onboard             — Create connected account + onboarding link
+  GET    /api/stripe/callback             — Handle onboarding return
+  POST   /api/stripe/webhook              — Stripe webhook handler
+
+Orders:
+  POST   /api/orders                      — Create order + payment intent
+  POST   /api/orders/:id/confirm          — Merchant confirms order
+  POST   /api/orders/:id/ship             — Merchant marks as shipped
+  POST   /api/orders/:id/refund           — Merchant initiates refund
+
+Webhooks (incoming):
+  POST   /api/webhooks/shopify            — Product/inventory updates
+  POST   /api/webhooks/square             — Product/inventory updates
+
+Scheduled Jobs (cron):
+  - Nightly ChamberMaster sync for all active chambers
+  - Low stock notification check
+  - Stale order cleanup (pending orders older than X hours)
+
+================================================================================

@@ -1,0 +1,828 @@
+================================================================================
+                    SHOP LOCAL MARKETPLACE - CODING STANDARDS
+                         Project Structure & Development Guidelines
+================================================================================
+
+Date: February 12, 2026
+For use by: AI Agents (Claude Code / Open Claw) and human developers
+Reference Docs:
+  - Shop_Local_Marketplace_Overview.txt (business context)
+  - shop_local_schema.sql (database schema)
+  - shop_local_data_model_overview.txt (data model decisions)
+  - shop_local_sprint_plan.txt (sprint plan & milestones)
+
+================================================================================
+  1. REPOSITORY STRUCTURE
+================================================================================
+
+Two repositories:
+
+  REPO 1: consumer-marketplace
+  └── The public-facing Angular app where shoppers browse and buy.
+      This is the "Shop Local" storefront with chamber branding.
+
+  REPO 2: marketplace-management
+  ├── /portal        — Angular app for merchants + chamber admins
+  ├── /api           — Node.js/Express API (shared backend for BOTH frontends)
+  └── /shared        — Shared TypeScript interfaces, enums, and types
+
+The consumer-marketplace repo imports shared types from a published
+or locally-referenced copy of /shared. Keep /shared as pure type
+definitions only — no runtime code, no dependencies, no logic.
+
+Why this structure:
+  - The portal and API are tightly coupled and deploy together
+  - The consumer site is independently deployable
+  - Shared types prevent interface drift across all three projects
+  - Keeps repos focused and manageable
+
+
+================================================================================
+  2. ANGULAR PROJECT STRUCTURE (Both Apps)
+================================================================================
+
+Organize by FEATURE, not by type. Each feature folder contains everything
+it needs — components, services, models, and guards.
+
+  src/
+  ├── app/
+  │   ├── core/                          # Singleton services, guards, interceptors
+  │   │   ├── auth/
+  │   │   │   ├── auth.service.ts
+  │   │   │   ├── auth.guard.ts
+  │   │   │   └── auth.interceptor.ts
+  │   │   ├── api/
+  │   │   │   └── api.service.ts         # Base HTTP service wrapping HttpClient
+  │   │   ├── layout/
+  │   │   │   ├── header/
+  │   │   │   ├── sidebar/               # Portal only
+  │   │   │   └── footer/
+  │   │   └── core.module.ts
+  │   │
+  │   ├── features/                      # Feature modules (lazy loaded)
+  │   │   ├── products/
+  │   │   │   ├── product-list/
+  │   │   │   │   ├── product-list.component.ts
+  │   │   │   │   ├── product-list.component.html
+  │   │   │   │   └── product-list.component.spec.ts  # Only for critical features
+  │   │   │   ├── product-detail/
+  │   │   │   │   ├── product-detail.component.ts
+  │   │   │   │   └── product-detail.component.html
+  │   │   │   ├── product-form/          # Portal only (add/edit product)
+  │   │   │   ├── services/
+  │   │   │   │   └── product.service.ts
+  │   │   │   ├── models/
+  │   │   │   │   └── product.model.ts   # Re-exports from shared types
+  │   │   │   └── products-routing.module.ts
+  │   │   │
+  │   │   ├── orders/
+  │   │   │   ├── order-list/
+  │   │   │   ├── order-detail/
+  │   │   │   ├── checkout/              # Consumer only
+  │   │   │   ├── cart/                  # Consumer only
+  │   │   │   ├── services/
+  │   │   │   ├── models/
+  │   │   │   └── orders-routing.module.ts
+  │   │   │
+  │   │   ├── merchants/
+  │   │   ├── chambers/                  # Portal only
+  │   │   ├── claims/                    # Portal only
+  │   │   ├── integrations/              # Portal only (Shopify, Square)
+  │   │   ├── notifications/             # Portal only
+  │   │   └── dashboard/
+  │   │
+  │   ├── shared/                        # Shared within THIS app
+  │   │   ├── components/                # Reusable UI components
+  │   │   │   ├── product-card/
+  │   │   │   ├── loading-spinner/
+  │   │   │   ├── empty-state/
+  │   │   │   ├── confirm-dialog/
+  │   │   │   └── image-upload/
+  │   │   ├── pipes/
+  │   │   ├── directives/
+  │   │   └── shared.module.ts
+  │   │
+  │   ├── app.component.ts
+  │   ├── app.module.ts
+  │   └── app-routing.module.ts
+  │
+  ├── assets/
+  ├── environments/
+  │   ├── environment.ts                 # Development
+  │   └── environment.prod.ts            # Production
+  └── styles/
+      ├── tailwind.css                   # Tailwind imports
+      └── variables.css                  # CSS custom properties (chamber branding)
+
+Key Rules:
+  - Every feature is a lazy-loaded module with its own routing
+  - Core module is imported ONCE in AppModule
+  - Shared module is imported by any feature that needs common components
+  - Services that are feature-specific live in that feature's /services folder
+  - App-wide services (auth, API base) live in /core
+  - No component should exceed ~300 lines. If it does, break it up.
+
+
+================================================================================
+  3. NODE.JS API STRUCTURE
+================================================================================
+
+Architecture: Route → Controller → Service
+
+  api/
+  ├── src/
+  │   ├── config/
+  │   │   ├── supabase.ts                # Supabase client initialization
+  │   │   ├── stripe.ts                  # Stripe client initialization
+  │   │   ├── environment.ts             # Env variable loading and validation
+  │   │   └── pino.ts                    # Logger configuration
+  │   │
+  │   ├── middleware/
+  │   │   ├── auth.middleware.ts          # Verify Supabase JWT, attach user to req
+  │   │   ├── role.middleware.ts          # Check user role (merchant, chamber_admin)
+  │   │   ├── error-handler.middleware.ts # Global error handler
+  │   │   ├── validate.middleware.ts      # Request validation (Zod or Joi)
+  │   │   └── request-logger.middleware.ts # Log incoming requests via Pino
+  │   │
+  │   ├── routes/
+  │   │   ├── chamber.routes.ts
+  │   │   ├── merchant.routes.ts
+  │   │   ├── product.routes.ts
+  │   │   ├── order.routes.ts
+  │   │   ├── claim.routes.ts
+  │   │   ├── integration.routes.ts
+  │   │   ├── stripe.routes.ts
+  │   │   ├── public.routes.ts           # Unauthenticated consumer endpoints
+  │   │   ├── notification.routes.ts
+  │   │   └── index.ts                   # Registers all routes
+  │   │
+  │   ├── controllers/
+  │   │   ├── chamber.controller.ts
+  │   │   ├── merchant.controller.ts
+  │   │   ├── product.controller.ts
+  │   │   ├── order.controller.ts
+  │   │   ├── claim.controller.ts
+  │   │   ├── integration.controller.ts
+  │   │   ├── stripe.controller.ts
+  │   │   ├── public.controller.ts
+  │   │   └── notification.controller.ts
+  │   │
+  │   ├── services/
+  │   │   ├── chamber.service.ts
+  │   │   ├── merchant.service.ts
+  │   │   ├── product.service.ts
+  │   │   ├── order.service.ts
+  │   │   ├── claim.service.ts
+  │   │   ├── stripe-connect.service.ts
+  │   │   ├── notification.service.ts
+  │   │   ├── email.service.ts           # Transactional email via SendGrid/Postmark/Resend
+  │   │   │
+  │   │   ├── integrations/
+  │   │   │   ├── chambermaster.service.ts
+  │   │   │   ├── shopify.service.ts
+  │   │   │   └── square.service.ts
+  │   │   │
+  │   │   └── jobs/                      # Scheduled/cron jobs
+  │   │       ├── chambermaster-sync.job.ts
+  │   │       ├── low-stock-check.job.ts
+  │   │       └── stale-order-cleanup.job.ts
+  │   │
+  │   ├── webhooks/
+  │   │   ├── stripe.webhook.ts          # Stripe event handlers
+  │   │   ├── shopify.webhook.ts         # Shopify event handlers
+  │   │   └── square.webhook.ts          # Square event handlers
+  │   │
+  │   ├── types/
+  │   │   └── express.d.ts              # Extend Express Request with user, etc.
+  │   │
+  │   ├── utils/
+  │   │   ├── slug.ts                    # Slug generation helper
+  │   │   ├── pagination.ts              # Pagination helper
+  │   │   └── case-transform.ts          # snake_case ↔ camelCase conversion
+  │   │
+  │   ├── app.ts                         # Express app setup (middleware, routes)
+  │   └── server.ts                      # Server entry point (listen)
+  │
+  ├── tests/
+  │   ├── services/
+  │   │   ├── order.service.test.ts
+  │   │   ├── stripe-connect.service.test.ts
+  │   │   ├── chambermaster.service.test.ts
+  │   │   └── product.service.test.ts    # Inventory logic tests
+  │   └── setup.ts                       # Test configuration
+  │
+  ├── package.json
+  ├── tsconfig.json
+  ├── .env.example                       # Template for env variables
+  └── README.md
+
+Layer Responsibilities:
+
+  ROUTES:
+    - Define URL paths and HTTP methods
+    - Apply middleware (auth, role checks, validation)
+    - Call the appropriate controller method
+    - Nothing else. No logic.
+
+    Example:
+      router.post('/products',
+        authMiddleware,
+        roleMiddleware('merchant'),
+        validate(createProductSchema),
+        productController.create
+      );
+
+  CONTROLLERS:
+    - Extract data from the request (params, body, query, user)
+    - Call the appropriate service method
+    - Format and return the response
+    - Handle controller-level errors
+    - No business logic. No database calls.
+
+    Example:
+      async create(req: Request, res: Response, next: NextFunction) {
+        try {
+          const product = await productService.create(req.user.merchant_id, req.body);
+          res.status(201).json({ data: product });
+        } catch (error) {
+          next(error);
+        }
+      }
+
+  SERVICES:
+    - All business logic lives here
+    - Talks to the database via Supabase client
+    - Calls external APIs (Stripe, Shopify, Square, ChamberMaster)
+    - Throws typed errors that the error handler middleware catches
+    - Services can call other services
+
+    Example:
+      async create(merchantId: string, input: CreateProductInput): Promise<Product> {
+        const slug = generateSlug(input.name);
+        const { data, error } = await supabase
+          .from('products')
+          .insert({ merchant_id: merchantId, slug, ...input })
+          .select()
+          .single();
+        if (error) throw new DatabaseError('Failed to create product', error);
+        return data;
+      }
+
+
+================================================================================
+  4. SHARED TYPES (/shared)
+================================================================================
+
+  shared/
+  ├── types/
+  │   ├── chamber.types.ts
+  │   ├── merchant.types.ts
+  │   ├── product.types.ts
+  │   ├── order.types.ts
+  │   ├── profile.types.ts
+  │   ├── claim.types.ts
+  │   ├── notification.types.ts
+  │   ├── integration.types.ts
+  │   └── api-response.types.ts
+  ├── enums/
+  │   ├── user-role.enum.ts
+  │   ├── merchant-status.enum.ts
+  │   ├── product-status.enum.ts
+  │   ├── product-source.enum.ts
+  │   ├── order-status.enum.ts
+  │   └── fulfillment-type.enum.ts
+  └── index.ts                           # Barrel export
+
+Rules:
+  - Pure TypeScript interfaces and enums only
+  - No runtime code. No imports from external packages.
+  - No classes with methods. Just type definitions.
+  - If the database schema changes, shared types MUST be updated to match.
+  - All types use camelCase properties (the API transforms from snake_case)
+
+
+================================================================================
+  5. NAMING CONVENTIONS
+================================================================================
+
+  DATABASE (PostgreSQL):
+    Tables:          snake_case plural       → products, order_items
+    Columns:         snake_case              → merchant_id, created_at
+    Enums:           snake_case              → order_status, user_role
+    Indexes:         idx_{table}_{column}    → idx_products_merchant
+    Triggers:        tr_{table}_{event}      → tr_orders_updated
+
+  API RESPONSES (JSON):
+    Property names:  snake_case              → { merchant_id, created_at }
+    Matches database directly. No transformation on the way out.
+
+  TYPESCRIPT CODE (Node + Angular):
+    Variables:       camelCase               → merchantId, createdAt
+    Functions:       camelCase               → getProductById, handleOrderCreated
+    Classes:         PascalCase              → ProductService, OrderController
+    Interfaces:      PascalCase with prefix  → Product, CreateProductInput
+    Enums:           PascalCase              → OrderStatus, UserRole
+    Enum values:     PascalCase or UPPERCASE → OrderStatus.Pending or PENDING
+    Constants:       UPPER_SNAKE_CASE        → MAX_UPLOAD_SIZE, DEFAULT_PAGE_SIZE
+    Files:           kebab-case              → product.service.ts, order-detail.component.ts
+
+  CASE TRANSFORMATION:
+    - The API service layer works in camelCase internally
+    - When returning responses, convert to snake_case for JSON output
+    - When reading from Supabase, convert from snake_case to camelCase
+    - Use a shared utility (utils/case-transform.ts) for this
+    - Angular code always works in camelCase
+    - Angular receives snake_case from API and transforms on receipt
+      via a shared HttpInterceptor or base API service
+
+
+================================================================================
+  6. API RESPONSE FORMAT
+================================================================================
+
+Every API response follows a consistent envelope:
+
+  SUCCESS (single item):
+  {
+    "data": { ... },
+    "error": null
+  }
+
+  SUCCESS (list with pagination):
+  {
+    "data": [ ... ],
+    "meta": {
+      "total": 150,
+      "page": 1,
+      "per_page": 20,
+      "total_pages": 8
+    },
+    "error": null
+  }
+
+  ERROR:
+  {
+    "data": null,
+    "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "Product name is required",
+      "details": { "field": "name" }        // Optional, for form validation
+    }
+  }
+
+Standard Error Codes:
+  VALIDATION_ERROR     — 400  Invalid input
+  UNAUTHORIZED         — 401  Not authenticated
+  FORBIDDEN            — 403  Authenticated but not allowed
+  NOT_FOUND            — 404  Resource doesn't exist
+  CONFLICT             — 409  Duplicate or state conflict
+  RATE_LIMITED         — 429  Too many requests
+  INTERNAL_ERROR       — 500  Unexpected server error
+  EXTERNAL_API_ERROR   — 502  ChamberMaster/Shopify/Square/Stripe failure
+
+Controllers NEVER return raw errors or stack traces to the client.
+The error-handler middleware catches all errors, logs the full error
+with Pino, and returns the sanitized envelope format above.
+
+
+================================================================================
+  7. ERROR HANDLING
+================================================================================
+
+Custom Error Classes (create in /src/utils/errors.ts):
+
+  AppError (base class)
+  ├── ValidationError       — Invalid user input
+  ├── NotFoundError         — Resource not found
+  ├── UnauthorizedError     — Authentication failure
+  ├── ForbiddenError        — Authorization failure
+  ├── ConflictError         — Duplicate or invalid state transition
+  ├── DatabaseError         — Supabase query failure
+  └── ExternalApiError      — Third-party API failure (Stripe, Shopify, etc.)
+
+Each error class carries:
+  - HTTP status code
+  - Error code string (from the list above)
+  - Human-readable message (safe to show to user)
+  - Optional details object
+  - Original error (for logging, never sent to client)
+
+Pattern:
+  Services THROW errors.
+  Controllers call next(error).
+  Error-handler middleware CATCHES and formats the response.
+
+  // In service:
+  const merchant = await this.getMerchantById(id);
+  if (!merchant) throw new NotFoundError('Merchant not found');
+
+  // In controller:
+  try {
+    const result = await merchantService.getById(req.params.id);
+    res.json({ data: result, error: null });
+  } catch (error) {
+    next(error);
+  }
+
+  // In error-handler middleware:
+  if (error instanceof AppError) {
+    logger.warn({ err: error }, error.message);
+    res.status(error.statusCode).json({
+      data: null,
+      error: { code: error.code, message: error.message, details: error.details }
+    });
+  } else {
+    logger.error({ err: error }, 'Unhandled error');
+    res.status(500).json({
+      data: null,
+      error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' }
+    });
+  }
+
+External API Failures:
+  - Always wrap external API calls in try/catch
+  - Log the full error details with Pino
+  - Throw ExternalApiError with a user-friendly message
+  - NEVER expose external API error details to the client
+  - For ChamberMaster sync failures: log to sync_log table
+  - For Stripe failures: log and surface actionable message to merchant
+  - For Shopify/Square failures: log and surface in integration status UI
+
+
+================================================================================
+  8. AUTHENTICATION & AUTHORIZATION
+================================================================================
+
+Authentication Flow:
+  1. User logs in via Angular → Supabase Auth → receives JWT
+  2. Angular stores the JWT (Supabase client handles this)
+  3. Every API request includes: Authorization: Bearer <jwt>
+  4. auth.middleware.ts verifies the JWT with Supabase
+  5. Attaches user object (id, role, merchant_id, chamber_id) to req.user
+  6. Controller/service uses req.user for authorization decisions
+
+Authorization:
+  - Role-based via role.middleware.ts
+  - role('merchant') — only merchants can access
+  - role('chamber_admin') — only chamber admins can access
+  - role('merchant', 'chamber_admin') — either can access
+  - Public routes (consumer browsing) skip auth middleware entirely
+
+Resource-Level Authorization (in services, not middleware):
+  - A merchant can only access their OWN products, orders, etc.
+  - A chamber admin can only access data within their OWN chamber
+  - Always filter queries by the authenticated user's context
+
+  Example:
+    // In product.service.ts
+    async getByMerchant(merchantId: string, requestingMerchantId: string) {
+      if (merchantId !== requestingMerchantId) {
+        throw new ForbiddenError('Cannot access another merchant\'s products');
+      }
+      // ... fetch products
+    }
+
+Public Endpoints (no auth):
+  All routes under /api/public/* are unauthenticated.
+  These serve the consumer marketplace (browse products, view merchants).
+  They only return active/published data. Never expose drafts, pending
+  merchants, or internal IDs unnecessarily.
+
+
+================================================================================
+  9. STYLING (TAILWIND CSS)
+================================================================================
+
+Both Angular apps use Tailwind CSS for styling.
+
+Setup:
+  - Install Tailwind, PostCSS, Autoprefixer in each Angular project
+  - Configure tailwind.config.js with custom theme extensions
+  - Import Tailwind base/components/utilities in styles/tailwind.css
+
+Chamber Branding (Consumer App Only):
+  The consumer app dynamically applies chamber branding using CSS
+  custom properties. When the app loads, it fetches the chamber's
+  branding config and sets CSS variables on :root.
+
+  // On chamber load:
+  document.documentElement.style.setProperty('--color-primary', chamber.primary_color);
+  document.documentElement.style.setProperty('--color-accent', chamber.accent_color);
+
+  // In tailwind.config.js, extend the theme:
+  theme: {
+    extend: {
+      colors: {
+        'chamber-primary': 'var(--color-primary)',
+        'chamber-accent': 'var(--color-accent)',
+      }
+    }
+  }
+
+  // Then use in templates:
+  <button class="bg-chamber-primary text-white hover:bg-chamber-accent">
+    Shop Now
+  </button>
+
+Tailwind Guidelines:
+  - Use Tailwind utilities for layout, spacing, typography, and color
+  - Extract reusable patterns into Angular components, NOT into @apply
+    classes (component reuse > CSS reuse)
+  - Keep component HTML readable. If a class list exceeds ~8 utilities,
+    consider breaking the element into a child component
+  - Mobile-first: always start with the mobile layout, add sm: md: lg:
+    breakpoints for larger screens
+  - Consumer app must look premium. Use generous spacing, clean
+    typography (consider a custom font like Inter), and subtle shadows
+  - Portal app can be more functional/utilitarian — clean and usable,
+    but doesn't need the same visual polish as the consumer site
+
+Color Palette (Portal App — Static):
+  Define a consistent neutral palette for the portal that doesn't change.
+  Grays for backgrounds, a blue or teal for primary actions, green for
+  success, yellow for warnings, red for errors.
+
+Do NOT Use:
+  - Inline styles (except for dynamic chamber branding CSS variables)
+  - CSS-in-JS
+  - Separate .scss files per component (Tailwind replaces this)
+  - !important (almost never)
+
+
+================================================================================
+  10. LOGGING (Pino)
+================================================================================
+
+Use Pino for all server-side logging. Configure in /src/config/pino.ts.
+
+Log Levels:
+  - fatal: Application is unusable (DB connection lost, Stripe misconfigured)
+  - error: Operation failed, needs attention (payment failed, sync crashed)
+  - warn:  Something unexpected but handled (rate limited, retry succeeded)
+  - info:  Normal operations worth recording (order placed, sync completed)
+  - debug: Detailed info for development (query results, API payloads)
+
+What to Log:
+  - Every incoming request (method, path, status code, duration) via middleware
+  - Every external API call (provider, endpoint, success/failure, duration)
+  - Every order lifecycle event (created, confirmed, shipped, refunded)
+  - Every sync operation (started, completed, counts, errors)
+  - Every authentication failure
+  - Every error caught by the error-handler middleware
+
+What NOT to Log:
+  - Full request/response bodies (too verbose, potential PII)
+  - Raw credit card or payment data (PCI compliance)
+  - OAuth tokens or API keys
+  - Customer personal information beyond what's needed for debugging
+  - Successful health check pings
+
+Log Format:
+  - Development: pino-pretty for human-readable console output
+  - Production: raw JSON for log aggregation services
+
+Request Context:
+  - Use Pino's child logger to attach request ID to all logs within a request
+  - This lets you trace a single request through the entire call chain
+
+  Example:
+    // In request-logger middleware:
+    const requestLogger = logger.child({ requestId: req.id });
+    req.log = requestLogger;
+    req.log.info({ method: req.method, path: req.path }, 'Request received');
+
+
+================================================================================
+  11. ENVIRONMENT VARIABLES
+================================================================================
+
+All configuration via .env files. Never hardcode secrets.
+
+  .env.example (committed to repo — template without real values):
+
+    # App
+    NODE_ENV=development
+    PORT=3000
+    API_URL=http://localhost:3000
+
+    # Supabase
+    SUPABASE_URL=https://your-project.supabase.co
+    SUPABASE_ANON_KEY=your-anon-key
+    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+    # Stripe
+    STRIPE_SECRET_KEY=sk_test_xxx
+    STRIPE_WEBHOOK_SECRET=whsec_xxx
+    STRIPE_PLATFORM_FEE_PERCENT=3.00
+
+    # Shopify
+    SHOPIFY_CLIENT_ID=xxx
+    SHOPIFY_CLIENT_SECRET=xxx
+
+    # Square
+    SQUARE_APPLICATION_ID=xxx
+    SQUARE_ACCESS_TOKEN=xxx
+
+    # Email (pick one)
+    EMAIL_PROVIDER=sendgrid
+    SENDGRID_API_KEY=xxx
+    EMAIL_FROM=noreply@shoplocal.com
+
+    # Logging
+    LOG_LEVEL=info
+
+  .env (NOT committed — real values, in .gitignore)
+
+  Rules:
+  - Validate all required env vars on startup (fail fast if missing)
+  - Use a typed config module (environment.ts) that reads and exports
+    validated config values
+  - Never access process.env directly outside of config/ files
+  - Angular environment files (environment.ts, environment.prod.ts)
+    hold the API URL only — no secrets in the frontend
+
+
+================================================================================
+  12. TESTING STRATEGY
+================================================================================
+
+Test CRITICAL BUSINESS LOGIC only. Don't test basic CRUD or UI.
+
+Test Runner: Jest (for Node API)
+
+What to Test:
+  ✅ Order creation flow (inventory check, total calculation, fee calc)
+  ✅ Stripe Connect payment logic (PaymentIntent creation, fee splitting)
+  ✅ Inventory decrement and out-of-stock handling
+  ✅ ChamberMaster sync (member upsert, status change handling)
+  ✅ Claim approval flow (merchant creation, status transitions)
+  ✅ Membership lapse → merchant deactivation logic
+  ✅ Shopify/Square product import mapping
+  ✅ Slug generation and collision handling
+
+What NOT to Test (for now):
+  ✗ Basic CRUD operations (get product by ID, list merchants)
+  ✗ Angular components and templates
+  ✗ Route definitions
+  ✗ Controller request/response parsing
+  ✗ UI layout and styling
+
+Test Patterns:
+  - Mock Supabase client for database calls
+  - Mock Stripe SDK for payment calls
+  - Mock external APIs (Shopify, Square, ChamberMaster)
+  - Test service methods directly, not through HTTP
+  - Each test file mirrors the service it tests:
+    services/order.service.ts → tests/services/order.service.test.ts
+
+  Example:
+    describe('OrderService.create', () => {
+      it('should calculate platform fee correctly', async () => {
+        const order = await orderService.create({
+          merchantId: 'xxx',
+          items: [{ productId: 'yyy', quantity: 2, unitPrice: 25.00 }],
+          fulfillmentType: 'local_pickup',
+        });
+        expect(order.subtotal).toBe(50.00);
+        expect(order.platform_fee_amount).toBe(1.50); // 3% of 50
+        expect(order.total).toBe(50.00);
+      });
+
+      it('should throw if product is out of stock', async () => {
+        // ... mock product with quantity 0
+        await expect(orderService.create({ ... }))
+          .rejects.toThrow('Product is out of stock');
+      });
+    });
+
+
+================================================================================
+  13. DATA ACCESS PATTERNS
+================================================================================
+
+ALL data access goes through the Node.js API. Angular apps NEVER talk
+directly to Supabase for data operations.
+
+  Angular App  →  Node API  →  Supabase
+                   ↕
+              Stripe / Shopify / Square / ChamberMaster
+
+The ONLY direct Supabase interaction from Angular is authentication:
+  - Supabase Auth for login, signup, password reset
+  - Supabase Auth for JWT management
+  - Everything else goes through HTTP calls to the API
+
+Why:
+  - One place to enforce business rules
+  - One place to log and monitor
+  - One place to handle errors consistently
+  - API acts as a security boundary (RLS alone isn't sufficient)
+  - Easier to test business logic in isolation
+  - No risk of exposing Supabase queries in client-side code
+
+
+================================================================================
+  14. GIT & CODE CONVENTIONS
+================================================================================
+
+Branch Strategy:
+  main         — Production-ready code. Deploy from here.
+  develop      — Integration branch. Features merge here first.
+  feature/*    — Feature branches (e.g. feature/sprint-3-claim-flow)
+  fix/*        — Bug fixes
+  hotfix/*     — Urgent production fixes
+
+Commit Messages:
+  Use conventional commits format:
+    feat: add product image upload endpoint
+    fix: correct inventory decrement on order cancel
+    refactor: extract slug generation to utility
+    docs: update API response format documentation
+    chore: upgrade Stripe SDK to v14
+    test: add order service fee calculation tests
+
+Pull Requests:
+  - One PR per sprint task or logical unit of work
+  - PR description should reference the sprint and task
+  - Self-review before merging (or have the AI agent explain changes)
+
+Code Quality:
+  - ESLint configured with TypeScript rules in both Angular and Node
+  - Prettier for consistent formatting
+  - No console.log in committed code — use Pino logger
+  - No commented-out code blocks
+  - No TODO comments without a sprint/task reference
+  - Maximum file length: ~300 lines (break up if larger)
+
+
+================================================================================
+  15. PERFORMANCE & SECURITY REMINDERS
+================================================================================
+
+Security:
+  - All Stripe operations server-side only
+  - Verify Stripe webhook signatures on every webhook
+  - Verify Shopify webhook HMAC signatures
+  - Never log or expose OAuth tokens, API keys, or card data
+  - Sanitize all user input (product names, descriptions, etc.)
+  - Use parameterized queries (Supabase client does this by default)
+  - Set CORS to only allow your frontend domains
+  - Rate limit public API endpoints
+
+Performance:
+  - Paginate all list endpoints (default 20, max 100)
+  - Use database indexes (already defined in schema)
+  - Lazy load Angular feature modules
+  - Compress and resize product images on upload
+  - Use Supabase Storage CDN URLs for images
+  - Cache chamber branding config on the consumer site (it rarely changes)
+  - Don't fetch what you don't need — use Supabase .select() to pick columns
+
+Image Handling:
+  - Accept: JPEG, PNG, WebP
+  - Max file size: 5MB per image
+  - Max images per product: 8
+  - On upload: generate a thumbnail (400px wide) and a full-size (1200px wide)
+  - Store both sizes in Supabase Storage
+  - Use thumbnail on product cards, full-size on product detail page
+  - Serve via Supabase Storage public URLs (CDN-backed)
+
+
+================================================================================
+  16. KEY DEPENDENCIES
+================================================================================
+
+  Node.js API:
+    express              — HTTP framework
+    @supabase/supabase-js — Supabase client
+    stripe               — Stripe SDK
+    pino                 — Logging
+    pino-pretty          — Dev-only pretty logging
+    zod                  — Request validation schemas
+    node-cron            — Scheduled jobs (CM sync, stock check)
+    helmet               — Security headers
+    cors                 — CORS configuration
+    compression          — Response compression
+    dotenv               — Environment variable loading
+
+  Angular Apps:
+    @supabase/supabase-js — Auth only (login, signup, JWT)
+    tailwindcss          — Styling
+    @angular/cdk         — Utilities (drag-drop for image reorder, etc.)
+
+  Development:
+    typescript           — Both apps and API
+    jest                 — API testing
+    ts-jest              — TypeScript support for Jest
+    eslint               — Linting
+    prettier             — Formatting
+    nodemon              — API auto-restart in development
+
+  Avoid:
+    - ORMs like TypeORM, Prisma, Sequelize (Supabase client is sufficient)
+    - Full UI component libraries (Tailwind replaces the need)
+    - State management libraries like NgRx (overkill for this app)
+    - GraphQL (REST is simpler and sufficient here)
+
+
+================================================================================
