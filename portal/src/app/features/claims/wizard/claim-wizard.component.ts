@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ClaimService } from '../services/claim.service';
 import { ChamberService } from '../../../core/services/chamber.service';
-import { CreateClaimInput } from '../../../../../../shared/types/claim.types';
+import { CreateClaimInput } from '@shared/types/claim.types';
 
 interface Chamber {
   id: string;

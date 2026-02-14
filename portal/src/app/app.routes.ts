@@ -10,6 +10,7 @@ import { MerchantDashboardComponent } from './features/merchants/dashboard/dashb
 import { ClaimWizardComponent } from './features/claims/wizard/claim-wizard.component';
 import { ClaimsAdminComponent } from './features/claims/admin/claims-admin.component';
 import { authGuard } from './core/auth/auth.guard';
+import { roleGuard } from './core/auth/role.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/login', pathMatch: 'full' },
@@ -23,7 +24,7 @@ export const routes: Routes = [
   
   // Claims Routes
   { path: 'claims/wizard', component: ClaimWizardComponent, canActivate: [authGuard] },
-  { path: 'claims/manage', component: ClaimsAdminComponent, canActivate: [authGuard] },
+  { path: 'claims/manage', component: ClaimsAdminComponent, canActivate: [roleGuard('chamber_admin')] },
   
   // Chamber Routes
   { path: 'chambers/setup', component: SetupWizardComponent, canActivate: [authGuard] },

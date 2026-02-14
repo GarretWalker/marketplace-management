@@ -8,9 +8,10 @@ const router = Router();
 // All routes require authentication
 router.use(authMiddleware);
 
-// POST /api/claims - Submit a new claim (merchants only)
-router.post('/', 
-  roleMiddleware('merchant'),
+// POST /api/claims - Submit a new claim (any authenticated user)
+// Note: Users submit claims BEFORE they become merchants
+// The merchant record is created when the claim is approved
+router.post('/',
   claimController.create.bind(claimController)
 );
 

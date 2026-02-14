@@ -80,6 +80,37 @@ export class ClaimService {
    * Submit a new claim request
    */
   async createClaim(userId: string, input: CreateClaimInput): Promise<ClaimRequest> {
+    // Check if user already has a merchant account
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('merchant_id')
+      .eq('id', userId)
+      .single();
+
+    if (profileError) {
+      throw new Error('Failed to fetch user profile');
+    }
+
+    if (profile.merchant_id) {
+      throw new Error('You already have a merchant account');
+    }
+
+    // Check if user already has a pending claim
+    const { data: existingClaim, error: existingClaimError } = await supabase
+      .from('claim_requests')
+      .select('id, status')
+      .eq('requested_by', userId)
+      .eq('status', 'pending')
+      .maybeSingle();
+
+    if (existingClaimError) {
+      throw new Error('Failed to check existing claims');
+    }
+
+    if (existingClaim) {
+      throw new Error('You already have a pending claim request');
+    }
+
     // Verify the ChamberMaster member exists and isn't already claimed
     const { data: member, error: memberError } = await supabase
       .from('chambermaster_members')
