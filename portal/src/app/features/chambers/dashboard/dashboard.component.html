@@ -1,0 +1,136 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="bg-white shadow">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center">
+          @if (chamber && chamber.logo_url) {
+            <img [src]="chamber.logo_url" alt="Chamber logo" class="h-10 w-auto mr-4" />
+          }
+          <h1 class="text-2xl font-bold text-gray-900">{{ chamber?.name || 'Chamber Portal' }}</h1>
+        </div>
+        <button
+          (click)="signOut()"
+          class="px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
+        >
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="flex">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white shadow-sm min-h-screen">
+      <nav class="mt-8 px-4">
+        <div class="space-y-2">
+          <a href="#" class="flex items-center px-4 py-3 text-gray-900 bg-blue-50 rounded-md font-medium">
+            <span>Dashboard</span>
+          </a>
+          <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-md">
+            <span>Member Roster</span>
+          </a>
+          <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-md">
+            <span>Claim Requests</span>
+          </a>
+          <a href="#" class="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-md">
+            <span>Settings</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8">
+      @if (isLoading) {
+        <div class="flex justify-center items-center h-64">
+          <div class="text-gray-500">Loading...</div>
+        </div>
+      } @else if (chamber) {
+        <div>
+          <h2 class="text-3xl font-bold text-gray-900 mb-8">Dashboard</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Member Roster Card -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Member Roster</h3>
+                <span class="text-2xl">👥</span>
+              </div>
+              <p class="text-3xl font-bold text-blue-600">0</p>
+              <p class="text-sm text-gray-500 mt-2">Total members synced</p>
+              <button class="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium">
+                View Roster →
+              </button>
+            </div>
+
+            <!-- Claim Requests Card -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Claim Requests</h3>
+                <span class="text-2xl">📋</span>
+              </div>
+              <p class="text-3xl font-bold text-orange-600">0</p>
+              <p class="text-sm text-gray-500 mt-2">Pending review</p>
+              <button class="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium">
+                Review Claims →
+              </button>
+            </div>
+
+            <!-- Active Merchants Card -->
+            <div class="bg-white rounded-lg shadow p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Active Merchants</h3>
+                <span class="text-2xl">🏪</span>
+              </div>
+              <p class="text-3xl font-bold text-green-600">0</p>
+              <p class="text-sm text-gray-500 mt-2">Selling on marketplace</p>
+              <button class="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium">
+                View Merchants →
+              </button>
+            </div>
+          </div>
+
+          <!-- Chamber Info -->
+          <div class="mt-8 bg-white rounded-lg shadow p-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">Chamber Information</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-gray-500">Location</p>
+                <p class="text-gray-900">{{ chamber.city }}, {{ chamber.state }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Contact Email</p>
+                <p class="text-gray-900">{{ chamber.contact_email }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Website</p>
+                <p class="text-gray-900">{{ chamber.website_url || 'Not set' }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-gray-500">Marketplace URL</p>
+                <p class="text-gray-900">{{ chamber.slug }}.shoplocal.com</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="mt-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h3>
+            <div class="flex gap-4">
+              <button class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                Sync Members
+              </button>
+              <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                Update Branding
+              </button>
+              <button class="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                Chamber Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </main>
+  </div>
+</div>

@@ -14,10 +14,12 @@
 ## Tasks Status
 
 ### API (Node.js)
-- [ ] POST /api/chambers — create a new chamber
-- [ ] PUT /api/chambers/:id — update chamber details
-- [ ] POST /api/chambers/:id/branding — upload logo/hero image to Supabase Storage
-- [ ] GET /api/chambers/:id — get chamber details
+- [x] POST /api/chambers — create a new chamber
+- [x] PUT /api/chambers/:id — update chamber details
+- [x] POST /api/chambers/:id/branding — upload logo/hero image to Supabase Storage
+- [x] GET /api/chambers/:id — get chamber details
+- [x] Auth middleware (JWT verification)
+- [x] Role middleware (role-based access control)
 
 ### Portal App (Angular)
 - [ ] Chamber admin registration page
@@ -37,7 +39,16 @@
 - [x] RLS policies (completed in Sprint 0)
 
 ## Completed Steps
-_Updates will be added here after each major step_
+
+### Step 1: API Layer ✅
+- Created chamber controller with CRUD endpoints
+- Created chamber service with business logic
+- Created auth middleware for JWT verification
+- Created role middleware for access control
+- Set up chamber routes with proper middleware
+- All TypeScript errors resolved
+- Build successful
+- Committed: [S1] feat: add chamber API endpoints and auth middleware
 
 ## Blockers
 _None yet_
