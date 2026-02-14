@@ -1,25 +1,40 @@
 import { Injectable, inject } from '@angular/core';
-import { ApiService, ApiResponse } from '../../../core/api/api.service';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Merchant, UpdateMerchantInput } from '../../../../../../shared/types/merchant.types';
+import { environment } from '../../../../environments/environment';
+
+interface Merchant {
+  id: string;
+  businessName: string;
+  status: 'active' | 'pending' | 'suspended';
+  stripeOnboardingComplete: boolean;
+  stripePayoutsEnabled: boolean;
+  totalProducts: number;
+  totalOrders: number;
+  totalRevenue: number;
+}
+
+interface ApiResponse<T> {
+  data: T | null;
+  error: { code: string; message: string } | null;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class MerchantService {
-  private api = inject(ApiService);
+  private http = inject(HttpClient);
+  private baseUrl = `${environment.apiUrl}/merchants`;
 
-  /**
-   * Get current merchant's record
-   */
   getMe(): Observable<ApiResponse<Merchant>> {
-    return this.api.get<Merchant>('/merchants/me');
+    return this.http.get<ApiResponse<Merchant>>(`${this.baseUrl}/me`);
   }
 
-  /**
-   * Update current merchant's settings
-   */
-  updateMe(input: UpdateMerchantInput): Observable<ApiResponse<Merchant>> {
-    return this.api.put<Merchant>('/merchants/me', input);
+  getMerchant(): Observable<ApiResponse<Merchant>> {
+    return this.getMe();
+  }
+
+  updateMerchant(updates: Partial<Merchant>): Observable<ApiResponse<Merchant>> {
+    return this.http.patch<ApiResponse<Merchant>>(`${this.baseUrl}/me`, updates);
   }
 }

@@ -160,11 +160,11 @@ export class MerchantDashboardComponent implements OnInit {
   async loadMerchant() {
     this.isLoading = true;
     this.merchantService.getMe().subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.merchant = response.data;
         this.isLoading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         // If 404, merchant doesn't exist yet (claim not approved)
         if (error.status === 404) {
           this.merchant = null;
