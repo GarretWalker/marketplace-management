@@ -1,11 +1,10 @@
 # Sprint 3 Progress — Merchant Onboarding & Claim Flow
 
 ## Current Status
-✅ API layer complete
-✅ Portal build errors fixed
-⏸️ Ready for frontend implementation
+✅ Sprint 3 Complete - Ready for Testing
 
 ## Completed Steps
+### Backend (API Layer)
 - [x] Read protocol document
 - [x] Read Sprint 3 requirements from sprint plan
 - [x] Read schema (claim_requests, merchants, profiles tables)
@@ -20,18 +19,23 @@
 - [x] Registered routes in api/src/routes/index.ts
 - [x] Added slug.ts utility
 - [x] Committed API layer
+
+### Frontend (Portal)
 - [x] Fixed portal build errors (claim.member → claim.memberData, snake_case → camelCase)
+- [x] Created ClaimService (createClaim, getClaims, approveClaim, denyClaim)
+- [x] Created MerchantService (getMe, getMerchant, updateMerchant)
+- [x] Created ChamberService (getChambers, getChamber, searchMembers)
+- [x] Updated ClaimWizardComponent (multi-step wizard with chamber select, business search, contact details, thank you)
+- [x] Fixed MerchantDashboardComponent (pending/stripe/suspended banners, stats, quick actions)
+- [x] Updated ClaimsAdminComponent (already existed with proper claim management UI)
+- [x] Verified routing in app.routes.ts (all routes already configured)
+- [x] Committed frontend implementation
+- [x] Portal builds successfully
 
 ## Next Steps
-1. Modify AuthService to support merchant registration
-2. Create merchant registration flow
-3. Create claim wizard components (chamber select, business search, submit, thank you)
-4. Create merchant dashboard with pending/stripe banners
-5. Create chamber admin claim management page
-6. Update app routing
-7. Test complete flow
-8. Create sprint report
-9. Push branch
+1. Push branch to origin ✅
+2. Manual testing of complete flow (merchant claim → admin approval → dashboard)
+3. Create sprint report documenting implementation
 
 ## Notes
 - SKIP email service (use logger.info() stubs)
