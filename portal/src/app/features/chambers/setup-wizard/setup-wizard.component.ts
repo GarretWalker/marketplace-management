@@ -122,7 +122,7 @@ export class SetupWizardComponent implements OnInit {
    *
    * Combines data from all 4 steps and creates the chamber.
    * On success, the API also links this chamber to the current user's profile.
-   * Then redirects to the dashboard.
+   * Refreshes the profile to get the updated chamber_id, then redirects to the dashboard.
    */
   async submit() {
     this.isLoading = true;
@@ -136,13 +136,17 @@ export class SetupWizardComponent implements OnInit {
     };
 
     this.chamberService.createChamber(chamberData).subscribe({
-      next: (response) => {
-        this.isLoading = false;
+      next: async (response) => {
         if (response.data) {
           // Success - chamber created and linked to user profile
-          // Redirect to dashboard
+          // IMPORTANT: Refresh the profile to sync the updated chamber_id
+          // The API updates the database, but our in-memory profile is stale.
+          // Without this refresh, the dashboard will think we have no chamber and redirect back here.
+          await this.authService.refreshProfile();
+          this.isLoading = false;
           this.router.navigate(['/dashboard']);
         } else if (response.error) {
+          this.isLoading = false;
           this.errorMessage = response.error.message;
         }
       },

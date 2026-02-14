@@ -41,10 +41,15 @@ export class AuthService {
     }
 
     // Listen for auth changes
+    // Only reload profile on sign in, sign out, or user updates (not on token refresh)
     this.supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session) => {
       if (session?.user) {
         this.currentUserSubject.next(session.user);
-        await this.loadUserProfile(session.user.id);
+
+        // Only load profile on relevant events, not on token refresh
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          await this.loadUserProfile(session.user.id);
+        }
       } else {
         this.currentUserSubject.next(null);
         this.currentProfileSubject.next(null);
@@ -53,13 +58,28 @@ export class AuthService {
   }
 
   private async loadUserProfile(userId: string) {
+    console.log('🔵 Loading profile for user:', userId);
+
     const { data, error } = await this.supabase
       .from('profiles')
       .select('id, role, chamber_id, merchant_id')
       .eq('id', userId)
       .single();
 
-    if (data && !error) {
+    if (error) {
+      console.error('❌ Failed to load profile:', error);
+
+      // If profile doesn't exist or can't be loaded, clear the session
+      // This handles cases where auth.users exists but profiles row doesn't
+      console.warn('⚠️ Clearing invalid session - profile not found');
+      await this.supabase.auth.signOut();
+      this.currentUserSubject.next(null);
+      this.currentProfileSubject.next(null);
+      return;
+    }
+
+    if (data) {
+      console.log('✅ Profile loaded:', data);
       const user = this.currentUserSubject.value;
       this.currentProfileSubject.next({
         id: data.id,
@@ -75,26 +95,24 @@ export class AuthService {
    * Register a new chamber admin
    */
   async signUp(email: string, password: string): Promise<{ error: any }> {
+    console.log('🔵 Starting signup for:', email);
+
     const { data, error } = await this.supabase.auth.signUp({
       email,
       password
     });
 
-    if (!error && data.user) {
-      // Create profile with chamber_admin role
-      const { error: profileError } = await this.supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          role: 'chamber_admin'
-        });
-
-      if (profileError) {
-        return { error: profileError };
-      }
+    if (error) {
+      console.error('❌ Auth signup failed:', error);
+      return { error };
     }
 
-    return { error };
+    if (data.user) {
+      console.log('✅ Auth user created:', data.user.id);
+      console.log('✅ Profile will be created automatically by database trigger');
+    }
+
+    return { error: null };
   }
 
   /**
@@ -145,5 +163,24 @@ export class AuthService {
    */
   get currentProfile(): UserProfile | null {
     return this.currentProfileSubject.value;
+  }
+
+  /**
+   * Manually refresh the user profile from the database
+   *
+   * Use this after operations that update the profile table in the database
+   * (e.g., chamber creation, which sets chamber_id).
+   *
+   * Why is this needed?
+   * - The onAuthStateChange listener only reloads profile on SIGNED_IN or USER_UPDATED events
+   * - Those events are triggered by auth.users table changes, not profiles table changes
+   * - When the API updates the profiles table, the frontend's cached profile becomes stale
+   * - This method forces a fresh fetch from the database to sync the in-memory profile
+   */
+  async refreshProfile(): Promise<void> {
+    const user = this.currentUserSubject.value;
+    if (user) {
+      await this.loadUserProfile(user.id);
+    }
   }
 }
