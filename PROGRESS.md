@@ -1,85 +1,70 @@
-# Sprint 1 Progress - Chamber Admin Onboarding
+# Sprint 2 Progress Tracker
 
-**Sprint:** Sprint 1 - Chamber Admin Onboarding  
-**Branch:** feature/sprint-1-chamber-admin  
-**Started:** February 14, 2026  
-**Status:** 🔄 IN PROGRESS
+## Sprint: ChamberMaster Sync & Member Roster
 
-## Sprint Goals
-- Chamber admin can register and login
-- Chamber admin can complete setup wizard (name, ChamberMaster connection, branding)
-- Chamber admin can see their dashboard shell
-- Chamber record exists with branding configuration
+Started: 2026-02-14
 
-## Tasks Status
+## Tasks
 
-### API (Node.js)
-- [x] POST /api/chambers — create a new chamber
-- [x] PUT /api/chambers/:id — update chamber details
-- [x] POST /api/chambers/:id/branding — upload logo/hero image to Supabase Storage
-- [x] GET /api/chambers/:id — get chamber details
-- [x] Auth middleware (JWT verification)
-- [x] Role middleware (role-based access control)
+### API Layer
+- [ ] ChamberMaster service (mock + live modes)
+  - [ ] Parse members_list_response format
+  - [ ] Parse member_details_response format
+  - [ ] Mock mode (reads from chambermaster_mock_data.json)
+  - [ ] Live mode (calls real API with X-ApiKey header)
+  - [ ] Environment variable toggle (CHAMBERMASTER_MOCK)
+- [ ] POST /api/chambers/:id/sync endpoint
+- [ ] GET /api/chambers/:id/members endpoint (with filtering)
+- [ ] GET /api/chambers/:id/sync-status endpoint
 
-### Portal App (Angular)
-- [x] Chamber admin registration page
-- [x] Chamber admin login page
-- [x] Chamber setup wizard (4 steps):
-  - [x] Step 1: Chamber name, city, state, contact info
-  - [x] Step 2: ChamberMaster connection (association ID, API key, base URL)
-  - [x] Step 3: Branding (logo upload, primary color, accent color, tagline, hero image)
-  - [x] Step 4: Review and save
-- [x] Chamber admin dashboard (shell/layout only)
-  - [x] Sidebar navigation
-  - [x] Chamber name + logo in header
-  - [x] Placeholder cards
+### Portal Layer
+- [ ] Member roster page in chamber admin dashboard
+- [ ] Sync Now button with loading states
+- [ ] Sync status/history display
+- [ ] Member list table with search/filter
 
-### Supabase
-- [x] Storage bucket policies (completed in Sprint 0)
-- [x] RLS policies (completed in Sprint 0)
+### Database
+- [ ] Verify chambermaster_members table schema
+- [ ] Verify sync_log table schema
 
 ## Completed Steps
 
-### Step 1: API Layer ✅
-- Created chamber controller with CRUD endpoints
-- Created chamber service with business logic
-- Created auth middleware for JWT verification
-- Created role middleware for access control
-- Set up chamber routes with proper middleware
-- All TypeScript errors resolved
-- Build successful
-- Committed: [S1] feat: add chamber API endpoints and auth middleware
+1. ✅ Read protocol and sprint plan documents
+2. ✅ Pulled latest main branch
+3. ✅ Created feature branch: feature/sprint-2-chambermaster-sync
+4. ✅ Created PROGRESS.md
+5. ✅ Examined chambermaster_mock_data.json and database schema
+6. ✅ Created ChamberMaster service (mock + live modes)
+7. ✅ Added axios dependency and logger utility
+8. ✅ Created sync, members, and sync-status API endpoints
+9. ✅ Created MemberRosterComponent for Portal
+10. ✅ Added route and dashboard link for member roster
+11. ✅ API builds successfully
+12. ✅ Portal builds successfully
 
-### Step 2: Angular Portal App ✅
-- Created core services:
-  - ApiService (HTTP wrapper with response envelope)
-  - AuthService (Supabase authentication)
-  - ChamberService (chamber CRUD operations)
-- Built authentication flow:
-  - Registration component with validation
-  - Login component
-  - HTTP interceptor for auth tokens
-- Built 4-step setup wizard:
-  - Step 1: Chamber information
-  - Step 2: ChamberMaster connection (optional)
-  - Step 3: Branding (colors, logo, tagline)
-  - Step 4: Review and submit
-  - Progress bar and navigation
-  - Auto-slug generation from chamber name
-- Built dashboard:
-  - Header with chamber logo/name
-  - Sidebar navigation
-  - Placeholder cards (Member Roster, Claim Requests, Active Merchants)
-  - Chamber information display
-  - Quick actions section
-- Configured routing with proper redirects
-- App builds successfully
-- Installed @supabase/supabase-js
-- Committed: [S1] feat: add portal Angular app with auth, setup wizard, and dashboard
+## Tasks Completed
+
+### API Layer
+- ✅ ChamberMaster service (mock + live modes)
+  - ✅ Parse members_list_response format
+  - ✅ Parse member_details_response format
+  - ✅ Mock mode (reads from chambermaster_mock_data.json)
+  - ✅ Live mode (calls real API with X-ApiKey header)
+  - ✅ Environment variable toggle (CHAMBERMASTER_MOCK)
+- ✅ POST /api/chambers/:id/sync endpoint
+- ✅ GET /api/chambers/:id/members endpoint (with filtering)
+- ✅ GET /api/chambers/:id/sync-status endpoint
+
+### Portal Layer
+- ✅ Member roster page in chamber admin dashboard
+- ✅ Sync Now button with loading states
+- ✅ Sync status/history display
+- ✅ Member list table with search/filter
+
+## Next Step
+
+Commit and push all changes.
 
 ## Blockers
-_None yet_
 
-## Notes
-- Supabase auth, storage buckets, and RLS policies are already configured from Sprint 0
-- Working on branch: feature/sprint-1-chamber-admin (already exists)
+None.

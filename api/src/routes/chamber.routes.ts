@@ -34,4 +34,26 @@ router.post(
   chamberController.uploadBranding
 );
 
+// ChamberMaster sync endpoints
+router.post(
+  '/:id/sync',
+  authMiddleware,
+  roleMiddleware('chamber_admin'),
+  chamberController.syncChamberMaster
+);
+
+router.get(
+  '/:id/members',
+  authMiddleware,
+  roleMiddleware('chamber_admin'),
+  chamberController.getMembers
+);
+
+router.get(
+  '/:id/sync-status',
+  authMiddleware,
+  roleMiddleware('chamber_admin'),
+  chamberController.getSyncStatus
+);
+
 export default router;

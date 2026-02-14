@@ -1,0 +1,125 @@
+<div class="member-roster-container">
+  <div class="header">
+    <h1>Member Roster</h1>
+    <button 
+      class="sync-button" 
+      (click)="triggerSync()" 
+      [disabled]="isSyncing"
+    >
+      {{ isSyncing ? 'Syncing...' : 'Sync Now' }}
+    </button>
+  </div>
+
+  <!-- Sync Status Card -->
+  <div class="sync-status" *ngIf="syncStatus">
+    <div class="status-item">
+      <span class="label">Last Sync:</span>
+      <span class="value">{{ formatDate(syncStatus.lastSyncAt) }}</span>
+    </div>
+    <div class="status-item" *ngIf="syncStatus.lastSyncResult">
+      <span class="label">Last Result:</span>
+      <span class="value">
+        Added: {{ syncStatus.lastSyncResult.members_added }}, 
+        Updated: {{ syncStatus.lastSyncResult.members_updated }}, 
+        Deactivated: {{ syncStatus.lastSyncResult.members_deactivated }}
+      </span>
+    </div>
+    <div class="status-item" *ngIf="syncStatus?.lastSyncResult?.error_message">
+      <span class="label error">Error:</span>
+      <span class="value error">{{ syncStatus?.lastSyncResult?.error_message }}</span>
+    </div>
+  </div>
+
+  <!-- Filters & Search -->
+  <div class="filters">
+    <div class="search-box">
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        (ngModelChange)="onSearchChange()"
+        placeholder="Search by business name..."
+      />
+    </div>
+    
+    <div class="filter-group">
+      <label>Status:</label>
+      <select [(ngModel)]="filterStatus" (ngModelChange)="onFilterChange()">
+        <option value="all">All</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+        <option value="prospective">Prospective</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Claimed:</label>
+      <select [(ngModel)]="filterClaimed" (ngModelChange)="onFilterChange()">
+        <option value="all">All</option>
+        <option value="claimed">Claimed</option>
+        <option value="unclaimed">Unclaimed</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading">
+    Loading members...
+  </div>
+
+  <!-- Members Table -->
+  <div *ngIf="!isLoading" class="table-container">
+    <table class="members-table">
+      <thead>
+        <tr>
+          <th>Business Name</th>
+          <th>Contact</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Claimed</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let member of members">
+          <td class="business-name">{{ member.business_name }}</td>
+          <td>{{ member.contact_name || '—' }}</td>
+          <td>{{ member.email || '—' }}</td>
+          <td>{{ member.phone || '—' }}</td>
+          <td>{{ member.category || '—' }}</td>
+          <td>
+            <span 
+              class="status-badge" 
+              [class.active]="member.member_status === 'active'"
+              [class.inactive]="member.member_status === 'inactive'"
+              [class.prospective]="member.member_status === 'prospective'"
+            >
+              {{ member.member_status }}
+            </span>
+          </td>
+          <td>
+            <span 
+              class="claimed-badge" 
+              [class.claimed]="member.is_claimed"
+              [class.unclaimed]="!member.is_claimed"
+            >
+              {{ member.is_claimed ? 'Claimed' : 'Unclaimed' }}
+            </span>
+          </td>
+        </tr>
+        <tr *ngIf="members.length === 0">
+          <td colspan="7" class="no-data">
+            No members found. Click "Sync Now" to import members from ChamberMaster.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!isLoading && totalMembers > 0" class="pagination">
+    <button (click)="previousPage()" [disabled]="currentPage === 1">Previous</button>
+    <span class="page-info">Page {{ currentPage }} of {{ totalPages }} ({{ totalMembers }} total)</span>
+    <button (click)="nextPage()" [disabled]="currentPage >= totalPages">Next</button>
+  </div>
+</div>
