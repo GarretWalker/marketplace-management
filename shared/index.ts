@@ -12,3 +12,4 @@ export * from './types/chamber.types';
 export * from './types/profile.types';
 export * from './types/merchant.types';
 export * from './types/product.types';
+export * from './types/claim.types';

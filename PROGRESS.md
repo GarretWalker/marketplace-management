@@ -1,70 +1,28 @@
-# Sprint 2 Progress Tracker
+# Sprint 3 Progress — Merchant Onboarding & Claim Flow
 
-## Sprint: ChamberMaster Sync & Member Roster
-
-Started: 2026-02-14
-
-## Tasks
-
-### API Layer
-- [ ] ChamberMaster service (mock + live modes)
-  - [ ] Parse members_list_response format
-  - [ ] Parse member_details_response format
-  - [ ] Mock mode (reads from chambermaster_mock_data.json)
-  - [ ] Live mode (calls real API with X-ApiKey header)
-  - [ ] Environment variable toggle (CHAMBERMASTER_MOCK)
-- [ ] POST /api/chambers/:id/sync endpoint
-- [ ] GET /api/chambers/:id/members endpoint (with filtering)
-- [ ] GET /api/chambers/:id/sync-status endpoint
-
-### Portal Layer
-- [ ] Member roster page in chamber admin dashboard
-- [ ] Sync Now button with loading states
-- [ ] Sync status/history display
-- [ ] Member list table with search/filter
-
-### Database
-- [ ] Verify chambermaster_members table schema
-- [ ] Verify sync_log table schema
+## Current Status
+Starting Sprint 3 implementation
 
 ## Completed Steps
+- [x] Read protocol document
+- [x] Read Sprint 3 requirements from sprint plan
+- [x] Read schema (claim_requests, merchants, profiles tables)
+- [x] Pulled latest main branch
+- [x] Created feature/sprint-3-merchant-claim-flow branch
+- [x] Created PROGRESS.md
 
-1. ✅ Read protocol and sprint plan documents
-2. ✅ Pulled latest main branch
-3. ✅ Created feature branch: feature/sprint-2-chambermaster-sync
-4. ✅ Created PROGRESS.md
-5. ✅ Examined chambermaster_mock_data.json and database schema
-6. ✅ Created ChamberMaster service (mock + live modes)
-7. ✅ Added axios dependency and logger utility
-8. ✅ Created sync, members, and sync-status API endpoints
-9. ✅ Created MemberRosterComponent for Portal
-10. ✅ Added route and dashboard link for member roster
-11. ✅ API builds successfully
-12. ✅ Portal builds successfully
+## Next Steps
+1. Create API types and interfaces
+2. Build claim service
+3. Build claim controller and routes
+4. Build merchant service
+5. Create Portal UI components (claim wizard, dashboard, admin claim management)
+6. Test complete flow
+7. Create sprint report
+8. Push branch
 
-## Tasks Completed
-
-### API Layer
-- ✅ ChamberMaster service (mock + live modes)
-  - ✅ Parse members_list_response format
-  - ✅ Parse member_details_response format
-  - ✅ Mock mode (reads from chambermaster_mock_data.json)
-  - ✅ Live mode (calls real API with X-ApiKey header)
-  - ✅ Environment variable toggle (CHAMBERMASTER_MOCK)
-- ✅ POST /api/chambers/:id/sync endpoint
-- ✅ GET /api/chambers/:id/members endpoint (with filtering)
-- ✅ GET /api/chambers/:id/sync-status endpoint
-
-### Portal Layer
-- ✅ Member roster page in chamber admin dashboard
-- ✅ Sync Now button with loading states
-- ✅ Sync status/history display
-- ✅ Member list table with search/filter
-
-## Next Step
-
-Commit and push all changes.
-
-## Blockers
-
-None.
+## Notes
+- SKIP email service (use logger.info() stubs)
+- SKIP notification badge UI (just create records in DB)
+- Approve endpoint must be transactional
+- Use ILIKE for business search (no fuzzy matching)
