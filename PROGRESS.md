@@ -22,17 +22,17 @@
 - [x] Role middleware (role-based access control)
 
 ### Portal App (Angular)
-- [ ] Chamber admin registration page
-- [ ] Chamber admin login page
-- [ ] Chamber setup wizard (4 steps):
-  - [ ] Step 1: Chamber name, city, state, contact info
-  - [ ] Step 2: ChamberMaster connection (association ID, API key, base URL)
-  - [ ] Step 3: Branding (logo upload, primary color, accent color, tagline, hero image)
-  - [ ] Step 4: Review and save
-- [ ] Chamber admin dashboard (shell/layout only)
-  - [ ] Sidebar navigation
-  - [ ] Chamber name + logo in header
-  - [ ] Placeholder cards
+- [x] Chamber admin registration page
+- [x] Chamber admin login page
+- [x] Chamber setup wizard (4 steps):
+  - [x] Step 1: Chamber name, city, state, contact info
+  - [x] Step 2: ChamberMaster connection (association ID, API key, base URL)
+  - [x] Step 3: Branding (logo upload, primary color, accent color, tagline, hero image)
+  - [x] Step 4: Review and save
+- [x] Chamber admin dashboard (shell/layout only)
+  - [x] Sidebar navigation
+  - [x] Chamber name + logo in header
+  - [x] Placeholder cards
 
 ### Supabase
 - [x] Storage bucket policies (completed in Sprint 0)
@@ -49,6 +49,33 @@
 - All TypeScript errors resolved
 - Build successful
 - Committed: [S1] feat: add chamber API endpoints and auth middleware
+
+### Step 2: Angular Portal App ✅
+- Created core services:
+  - ApiService (HTTP wrapper with response envelope)
+  - AuthService (Supabase authentication)
+  - ChamberService (chamber CRUD operations)
+- Built authentication flow:
+  - Registration component with validation
+  - Login component
+  - HTTP interceptor for auth tokens
+- Built 4-step setup wizard:
+  - Step 1: Chamber information
+  - Step 2: ChamberMaster connection (optional)
+  - Step 3: Branding (colors, logo, tagline)
+  - Step 4: Review and submit
+  - Progress bar and navigation
+  - Auto-slug generation from chamber name
+- Built dashboard:
+  - Header with chamber logo/name
+  - Sidebar navigation
+  - Placeholder cards (Member Roster, Claim Requests, Active Merchants)
+  - Chamber information display
+  - Quick actions section
+- Configured routing with proper redirects
+- App builds successfully
+- Installed @supabase/supabase-js
+- Committed: [S1] feat: add portal Angular app with auth, setup wizard, and dashboard
 
 ## Blockers
 _None yet_
