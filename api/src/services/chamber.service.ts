@@ -1,4 +1,4 @@
-import { supabase } from '../config/supabase';
+import { supabaseAdmin } from '../config/supabase';
 import { logger } from '../config/pino';
 
 interface CreateChamberInput {
@@ -49,6 +49,9 @@ export const chamberService = {
    * If step 2 fails, we rollback step 1 to maintain data integrity.
    * Note: is_active defaults to false - chamber admins must "launch" later.
    *
+   * Uses service role client (bypasses RLS) since authentication was already
+   * verified by middleware. Application logic enforces business rules.
+   *
    * @param userId - The ID of the user creating the chamber (from req.user)
    * @param input - Chamber details from setup wizard
    * @returns The created chamber record
@@ -57,8 +60,8 @@ export const chamberService = {
   async create(userId: string, input: CreateChamberInput) {
     logger.info({ userId, chamberName: input.name }, 'Creating new chamber');
 
-    // Step 1: Insert chamber record
-    const { data: chamber, error: chamberError } = await supabase
+    // Step 1: Insert chamber record using admin client (bypasses RLS)
+    const { data: chamber, error: chamberError } = await supabaseAdmin
       .from('chambers')
       .insert({
         name: input.name,
@@ -84,7 +87,7 @@ export const chamberService = {
 
     // Step 2: Link the chamber to the user's profile
     // This establishes the chamber admin relationship
-    const { error: profileError } = await supabase
+    const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({ chamber_id: chamber.id })
       .eq('id', userId);
@@ -95,7 +98,7 @@ export const chamberService = {
       // ROLLBACK: Delete the chamber we just created
       // This prevents orphaned chamber records in the database
       // We do this manually since Supabase client doesn't support transactions
-      const { error: deleteError } = await supabase
+      const { error: deleteError } = await supabaseAdmin
         .from('chambers')
         .delete()
         .eq('id', chamber.id);
@@ -125,7 +128,7 @@ export const chamberService = {
    * @throws Error if not found or user doesn't have access
    */
   async getById(chamberId: string, userId?: string) {
-    const { data: chamber, error } = await supabase
+    const { data: chamber, error } = await supabaseAdmin
       .from('chambers')
       .select('*')
       .eq('id', chamberId)
@@ -143,7 +146,7 @@ export const chamberService = {
     // Authorization: Verify the user has access to this chamber
     // Chamber admins can only access their own chamber
     if (userId) {
-      const { data: profile } = await supabase
+      const { data: profile } = await supabaseAdmin
         .from('profiles')
         .select('chamber_id, role')
         .eq('id', userId)
@@ -166,7 +169,7 @@ export const chamberService = {
     // Verify user has access
     await this.getById(chamberId, userId);
 
-    const { data: chamber, error } = await supabase
+    const { data: chamber, error } = await supabaseAdmin
       .from('chambers')
       .update(input)
       .eq('id', chamberId)
@@ -208,7 +211,7 @@ export const chamberService = {
     if (input.logo_url) updateData.logo_url = input.logo_url;
     if (input.hero_image_url) updateData.hero_image_url = input.hero_image_url;
 
-    const { data: chamber, error } = await supabase
+    const { data: chamber, error } = await supabaseAdmin
       .from('chambers')
       .update(updateData)
       .eq('id', chamberId)
