@@ -41,11 +41,23 @@ interface BrandingUploadInput {
 export const chamberService = {
   /**
    * Create a new chamber and associate it with the chamber admin
+   *
+   * This is a two-step process:
+   * 1. Create the chamber record in the database
+   * 2. Link the chamber to the admin's profile (chamber_id foreign key)
+   *
+   * If step 2 fails, we rollback step 1 to maintain data integrity.
+   * Note: is_active defaults to false - chamber admins must "launch" later.
+   *
+   * @param userId - The ID of the user creating the chamber (from req.user)
+   * @param input - Chamber details from setup wizard
+   * @returns The created chamber record
+   * @throws Error if creation or linking fails
    */
   async create(userId: string, input: CreateChamberInput) {
     logger.info({ userId, chamberName: input.name }, 'Creating new chamber');
 
-    // Insert chamber
+    // Step 1: Insert chamber record
     const { data: chamber, error: chamberError } = await supabase
       .from('chambers')
       .insert({
@@ -60,7 +72,7 @@ export const chamberService = {
         chambermaster_api_key: input.chambermaster_api_key,
         chambermaster_base_url: input.chambermaster_base_url,
         chambermaster_sync_enabled: input.chambermaster_sync_enabled || false,
-        is_active: false
+        is_active: false  // New chambers start inactive until admin launches them
       })
       .select()
       .single();
@@ -70,15 +82,29 @@ export const chamberService = {
       throw new Error(`Failed to create chamber: ${chamberError.message}`);
     }
 
-    // Update the user's profile to link them to this chamber
+    // Step 2: Link the chamber to the user's profile
+    // This establishes the chamber admin relationship
     const { error: profileError } = await supabase
       .from('profiles')
       .update({ chamber_id: chamber.id })
       .eq('id', userId);
 
     if (profileError) {
-      logger.error({ error: profileError }, 'Failed to link chamber to profile');
-      // Consider rolling back chamber creation here
+      logger.error({ error: profileError, chamberId: chamber.id }, 'Failed to link chamber to profile - rolling back chamber creation');
+
+      // ROLLBACK: Delete the chamber we just created
+      // This prevents orphaned chamber records in the database
+      // We do this manually since Supabase client doesn't support transactions
+      const { error: deleteError } = await supabase
+        .from('chambers')
+        .delete()
+        .eq('id', chamber.id);
+
+      if (deleteError) {
+        logger.error({ error: deleteError, chamberId: chamber.id }, 'Failed to rollback chamber creation');
+        // Note: We log but don't throw here to preserve the original error
+      }
+
       throw new Error(`Failed to link chamber to profile: ${profileError.message}`);
     }
 
@@ -88,6 +114,15 @@ export const chamberService = {
 
   /**
    * Get chamber by ID (with authorization check)
+   *
+   * Authorization logic:
+   * - Chamber admins can only access their own chamber (checked via profile.chamber_id)
+   * - Public endpoints may call this without userId to skip auth check
+   *
+   * @param chamberId - The chamber ID to fetch
+   * @param userId - Optional user ID for authorization check
+   * @returns The chamber record
+   * @throws Error if not found or user doesn't have access
    */
   async getById(chamberId: string, userId?: string) {
     const { data: chamber, error } = await supabase
@@ -105,7 +140,8 @@ export const chamberService = {
       throw new Error('Chamber not found');
     }
 
-    // Verify the user has access to this chamber
+    // Authorization: Verify the user has access to this chamber
+    // Chamber admins can only access their own chamber
     if (userId) {
       const { data: profile } = await supabase
         .from('profiles')
@@ -147,9 +183,15 @@ export const chamberService = {
   },
 
   /**
-   * Upload branding assets to Supabase Storage
-   * For now, this expects URLs to already-uploaded images
-   * Full file upload will be handled by a separate multipart endpoint
+   * Update chamber branding assets (logo and hero image)
+   *
+   * Current implementation: Expects URLs to already-uploaded images
+   * Future enhancement: Add multipart file upload endpoint to upload directly to Supabase Storage
+   *
+   * @param chamberId - The chamber to update
+   * @param userId - User ID for authorization check
+   * @param input - Branding URLs (logo_url and/or hero_image_url)
+   * @returns Updated chamber record
    */
   async uploadBranding(
     chamberId: string,
@@ -158,9 +200,10 @@ export const chamberService = {
   ) {
     logger.info({ chamberId, userId }, 'Updating chamber branding');
 
-    // Verify user has access
+    // Verify user has access to this chamber (throws if not authorized)
     await this.getById(chamberId, userId);
 
+    // Build update object with only provided fields
     const updateData: Partial<UpdateChamberInput> = {};
     if (input.logo_url) updateData.logo_url = input.logo_url;
     if (input.hero_image_url) updateData.hero_image_url = input.hero_image_url;

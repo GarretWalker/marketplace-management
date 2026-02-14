@@ -5,6 +5,21 @@ import { Router } from '@angular/router';
 import { ChamberService } from '../services/chamber.service';
 import { AuthService } from '../../../core/auth/auth.service';
 
+/**
+ * Setup Wizard Component - 4-step onboarding flow for new chamber admins
+ *
+ * Steps:
+ * 1. Chamber Information - name, location, contact details
+ * 2. ChamberMaster Connection - optional API integration setup
+ * 3. Branding - logo, colors, tagline
+ * 4. Review & Submit - confirmation before creating chamber
+ *
+ * Features:
+ * - Auto-generates URL slug from chamber name
+ * - Step validation prevents advancing with invalid data
+ * - Progress bar shows current step
+ * - On completion, creates chamber and redirects to dashboard
+ */
 @Component({
   selector: 'app-setup-wizard',
   standalone: true,
@@ -57,13 +72,15 @@ export class SetupWizardComponent implements OnInit {
       hero_image_url: ['']
     });
 
-    // Auto-generate slug from name
+    // Auto-generate URL-friendly slug from chamber name
+    // Example: "Cullman Chamber of Commerce" → "cullman-chamber-of-commerce"
+    // Only updates if user hasn't manually edited the slug field
     this.step1Form.get('name')?.valueChanges.subscribe(name => {
       if (name && !this.step1Form.get('slug')?.touched) {
         const slug = name.toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-');
+          .replace(/[^a-z0-9\s-]/g, '')  // Remove special characters
+          .replace(/\s+/g, '-')          // Replace spaces with hyphens
+          .replace(/-+/g, '-');          // Collapse multiple hyphens
         this.step1Form.patchValue({ slug }, { emitEvent: false });
       }
     });
@@ -100,11 +117,18 @@ export class SetupWizardComponent implements OnInit {
     }
   }
 
+  /**
+   * Submit the complete chamber setup
+   *
+   * Combines data from all 4 steps and creates the chamber.
+   * On success, the API also links this chamber to the current user's profile.
+   * Then redirects to the dashboard.
+   */
   async submit() {
     this.isLoading = true;
     this.errorMessage = '';
 
-    // Combine all form data
+    // Merge all form data from the 4 steps into a single object
     const chamberData = {
       ...this.step1Form.value,
       ...this.step2Form.value,
@@ -115,7 +139,8 @@ export class SetupWizardComponent implements OnInit {
       next: (response) => {
         this.isLoading = false;
         if (response.data) {
-          // Success - redirect to dashboard
+          // Success - chamber created and linked to user profile
+          // Redirect to dashboard
           this.router.navigate(['/dashboard']);
         } else if (response.error) {
           this.errorMessage = response.error.message;

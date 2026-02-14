@@ -27,6 +27,13 @@ export class LoginComponent {
     });
   }
 
+  /**
+   * Handle login form submission
+   *
+   * After successful login, determines where to redirect the user:
+   * - If user has a chamber already → Dashboard
+   * - If user has no chamber yet → Setup Wizard
+   */
   async onSubmit() {
     if (this.loginForm.invalid) {
       return;
@@ -43,7 +50,8 @@ export class LoginComponent {
     if (error) {
       this.errorMessage = error.message || 'Login failed. Please check your credentials.';
     } else {
-      // Check if user has a chamber, if not redirect to setup
+      // Smart redirect: check if user has completed chamber setup
+      // New users need to go through the setup wizard first
       const profile = this.authService.currentProfile;
       if (profile?.chamber_id) {
         this.router.navigate(['/dashboard']);
