@@ -1,0 +1,331 @@
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-gray-900">Set Up Your Chamber</h1>
+      <p class="mt-2 text-gray-600">Step {{ currentStep }} of {{ totalSteps }}</p>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="mb-8">
+      <div class="bg-gray-200 rounded-full h-2">
+        <div
+          class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+          [style.width.%]="getProgressPercentage()"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    @if (errorMessage) {
+      <div class="mb-6 rounded-md bg-red-50 p-4">
+        <p class="text-sm text-red-800">{{ errorMessage }}</p>
+      </div>
+    }
+
+    <!-- Step Content -->
+    <div class="bg-white rounded-lg shadow p-8">
+      <!-- Step 1: Chamber Info -->
+      @if (currentStep === 1) {
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Chamber Information</h2>
+          <form [formGroup]="step1Form" class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Chamber Name *</label>
+              <input
+                type="text"
+                formControlName="name"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="e.g., Cullman Area Chamber of Commerce"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">URL Slug *</label>
+              <input
+                type="text"
+                formControlName="slug"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="e.g., cullman"
+              />
+              <p class="mt-1 text-sm text-gray-500">This will be your marketplace URL: yourslug.shoplocal.com</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">City *</label>
+                <input
+                  type="text"
+                  formControlName="city"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">State *</label>
+                <input
+                  type="text"
+                  formControlName="state"
+                  maxlength="2"
+                  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="AL"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Contact Email *</label>
+              <input
+                type="email"
+                formControlName="contact_email"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Phone</label>
+              <input
+                type="tel"
+                formControlName="phone"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Website URL</label>
+              <input
+                type="url"
+                formControlName="website_url"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="https://yourchamber.com"
+              />
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- Step 2: ChamberMaster Connection -->
+      @if (currentStep === 2) {
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">ChamberMaster Connection</h2>
+          <p class="text-gray-600 mb-6">
+            Connect your ChamberMaster/GrowthZone account to automatically sync your member roster.
+            You can skip this step and add members manually later.
+          </p>
+          <form [formGroup]="step2Form" class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Association ID</label>
+              <input
+                type="text"
+                formControlName="chambermaster_association_id"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Your ChamberMaster customer ID"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">API Key</label>
+              <input
+                type="password"
+                formControlName="chambermaster_api_key"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Base URL</label>
+              <input
+                type="url"
+                formControlName="chambermaster_base_url"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="https://secure2.chambermaster.com"
+              />
+            </div>
+
+            <div class="flex items-center">
+              <input
+                type="checkbox"
+                formControlName="chambermaster_sync_enabled"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label class="ml-2 block text-sm text-gray-900">
+                Enable automatic nightly sync
+              </label>
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- Step 3: Branding -->
+      @if (currentStep === 3) {
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Branding</h2>
+          <p class="text-gray-600 mb-6">
+            Customize the look and feel of your marketplace. You can update these later.
+          </p>
+          <form [formGroup]="step3Form" class="space-y-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Tagline</label>
+              <input
+                type="text"
+                formControlName="tagline"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Shop Local. Support Cullman."
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Primary Color</label>
+                <input
+                  type="color"
+                  formControlName="primary_color"
+                  class="mt-1 block w-full h-10 rounded-md border-gray-300"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Accent Color</label>
+                <input
+                  type="color"
+                  formControlName="accent_color"
+                  class="mt-1 block w-full h-10 rounded-md border-gray-300"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Logo URL</label>
+              <input
+                type="url"
+                formControlName="logo_url"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="https://example.com/logo.png"
+              />
+              <p class="mt-1 text-sm text-gray-500">Provide a URL to your logo image</p>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Hero Image URL</label>
+              <input
+                type="url"
+                formControlName="hero_image_url"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                placeholder="https://example.com/hero.jpg"
+              />
+              <p class="mt-1 text-sm text-gray-500">Provide a URL to your hero/banner image</p>
+            </div>
+          </form>
+        </div>
+      }
+
+      <!-- Step 4: Review -->
+      @if (currentStep === 4) {
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-6">Review & Confirm</h2>
+          <p class="text-gray-600 mb-6">
+            Please review your chamber information before submitting.
+          </p>
+
+          <div class="space-y-6">
+            <!-- Chamber Info Review -->
+            <div>
+              <h3 class="font-semibold text-gray-900 mb-2">Chamber Information</h3>
+              <dl class="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <dt class="font-medium text-gray-500">Name:</dt>
+                  <dd class="text-gray-900">{{ step1Form.value.name }}</dd>
+                </div>
+                <div>
+                  <dt class="font-medium text-gray-500">Slug:</dt>
+                  <dd class="text-gray-900">{{ step1Form.value.slug }}</dd>
+                </div>
+                <div>
+                  <dt class="font-medium text-gray-500">Location:</dt>
+                  <dd class="text-gray-900">{{ step1Form.value.city }}, {{ step1Form.value.state }}</dd>
+                </div>
+                <div>
+                  <dt class="font-medium text-gray-500">Contact:</dt>
+                  <dd class="text-gray-900">{{ step1Form.value.contact_email }}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <!-- ChamberMaster Review -->
+            @if (step2Form.value.chambermaster_association_id) {
+              <div>
+                <h3 class="font-semibold text-gray-900 mb-2">ChamberMaster Connection</h3>
+                <p class="text-sm text-gray-700">
+                  Association ID: {{ step2Form.value.chambermaster_association_id }}
+                </p>
+                <p class="text-sm text-gray-700">
+                  Auto-sync: {{ step2Form.value.chambermaster_sync_enabled ? 'Enabled' : 'Disabled' }}
+                </p>
+              </div>
+            }
+
+            <!-- Branding Review -->
+            <div>
+              <h3 class="font-semibold text-gray-900 mb-2">Branding</h3>
+              <p class="text-sm text-gray-700">Tagline: {{ step3Form.value.tagline || 'Not set' }}</p>
+              <div class="flex gap-4 mt-2">
+                <div>
+                  <span class="text-sm text-gray-500">Primary:</span>
+                  <div
+                    class="w-12 h-12 rounded border border-gray-300"
+                    [style.background-color]="step3Form.value.primary_color"
+                  ></div>
+                </div>
+                <div>
+                  <span class="text-sm text-gray-500">Accent:</span>
+                  <div
+                    class="w-12 h-12 rounded border border-gray-300"
+                    [style.background-color]="step3Form.value.accent_color"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Navigation Buttons -->
+      <div class="mt-8 flex justify-between">
+        @if (currentStep > 1) {
+          <button
+            type="button"
+            (click)="previousStep()"
+            class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            [disabled]="isLoading"
+          >
+            Previous
+          </button>
+        } @else {
+          <div></div>
+        }
+
+        @if (currentStep < totalSteps) {
+          <button
+            type="button"
+            (click)="nextStep()"
+            [disabled]="!isCurrentStepValid()"
+            class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        } @else {
+          <button
+            type="button"
+            (click)="submit()"
+            [disabled]="isLoading"
+            class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            @if (isLoading) {
+              <span>Creating chamber...</span>
+            } @else {
+              <span>Create Chamber</span>
+            }
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</div>
