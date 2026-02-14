@@ -1,7 +1,9 @@
 # Sprint 3 Progress — Merchant Onboarding & Claim Flow
 
 ## Current Status
-Starting Sprint 3 implementation
+✅ API layer complete
+✅ Portal build errors fixed
+⏸️ Ready for frontend implementation
 
 ## Completed Steps
 - [x] Read protocol document
@@ -18,6 +20,7 @@ Starting Sprint 3 implementation
 - [x] Registered routes in api/src/routes/index.ts
 - [x] Added slug.ts utility
 - [x] Committed API layer
+- [x] Fixed portal build errors (claim.member → claim.memberData, snake_case → camelCase)
 
 ## Next Steps
 1. Modify AuthService to support merchant registration
