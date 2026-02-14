@@ -225,5 +225,27 @@ export const chamberService = {
 
     logger.info({ chamberId }, 'Chamber branding updated successfully');
     return chamber;
+  },
+
+  /**
+   * Get all active chambers (public endpoint)
+   * Used by claim wizard to show available chambers to prospective merchants
+   */
+  async getAllActive() {
+    logger.info('Fetching all active chambers');
+
+    const { data: chambers, error } = await supabaseAdmin
+      .from('chambers')
+      .select('id, name, slug, city, state')
+      .eq('is_active', true)
+      .order('name', { ascending: true });
+
+    if (error) {
+      logger.error({ error }, 'Failed to fetch active chambers');
+      throw new Error(`Failed to fetch chambers: ${error.message}`);
+    }
+
+    logger.info({ count: chambers?.length || 0 }, 'Active chambers fetched');
+    return chambers || [];
   }
 };

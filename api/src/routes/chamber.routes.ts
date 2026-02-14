@@ -5,7 +5,13 @@ import { roleMiddleware } from '../middleware/role.middleware';
 
 const router = Router();
 
-// All chamber routes require authentication and chamber_admin role
+// Public route - list all active chambers (for claim wizard)
+router.get(
+  '/',
+  chamberController.getAllActive
+);
+
+// Protected routes - require authentication and chamber_admin role
 router.post(
   '/',
   authMiddleware,

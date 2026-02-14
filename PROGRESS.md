@@ -1,70 +1,44 @@
-# Sprint 2 Progress Tracker
+# Sprint 3 Progress — Merchant Onboarding & Claim Flow
 
-## Sprint: ChamberMaster Sync & Member Roster
-
-Started: 2026-02-14
-
-## Tasks
-
-### API Layer
-- [ ] ChamberMaster service (mock + live modes)
-  - [ ] Parse members_list_response format
-  - [ ] Parse member_details_response format
-  - [ ] Mock mode (reads from chambermaster_mock_data.json)
-  - [ ] Live mode (calls real API with X-ApiKey header)
-  - [ ] Environment variable toggle (CHAMBERMASTER_MOCK)
-- [ ] POST /api/chambers/:id/sync endpoint
-- [ ] GET /api/chambers/:id/members endpoint (with filtering)
-- [ ] GET /api/chambers/:id/sync-status endpoint
-
-### Portal Layer
-- [ ] Member roster page in chamber admin dashboard
-- [ ] Sync Now button with loading states
-- [ ] Sync status/history display
-- [ ] Member list table with search/filter
-
-### Database
-- [ ] Verify chambermaster_members table schema
-- [ ] Verify sync_log table schema
+## Current Status
+✅ Sprint 3 Complete - Ready for Testing
 
 ## Completed Steps
+### Backend (API Layer)
+- [x] Read protocol document
+- [x] Read Sprint 3 requirements from sprint plan
+- [x] Read schema (claim_requests, merchants, profiles tables)
+- [x] Pulled latest main branch
+- [x] Created feature/sprint-3-merchant-claim-flow branch
+- [x] Created PROGRESS.md
+- [x] Created claim.types.ts with all claim interfaces
+- [x] Created claim.service.ts (createClaim, getClaimsByChamber, approveClaim with manual transaction, denyClaim)
+- [x] Created merchant.service.ts (getMerchantByUserId, updateMerchant)
+- [x] Created claim.controller.ts and merchant.controller.ts
+- [x] Created claim.routes.ts and merchant.routes.ts
+- [x] Registered routes in api/src/routes/index.ts
+- [x] Added slug.ts utility
+- [x] Committed API layer
 
-1. ✅ Read protocol and sprint plan documents
-2. ✅ Pulled latest main branch
-3. ✅ Created feature branch: feature/sprint-2-chambermaster-sync
-4. ✅ Created PROGRESS.md
-5. ✅ Examined chambermaster_mock_data.json and database schema
-6. ✅ Created ChamberMaster service (mock + live modes)
-7. ✅ Added axios dependency and logger utility
-8. ✅ Created sync, members, and sync-status API endpoints
-9. ✅ Created MemberRosterComponent for Portal
-10. ✅ Added route and dashboard link for member roster
-11. ✅ API builds successfully
-12. ✅ Portal builds successfully
+### Frontend (Portal)
+- [x] Fixed portal build errors (claim.member → claim.memberData, snake_case → camelCase)
+- [x] Created ClaimService (createClaim, getClaims, approveClaim, denyClaim)
+- [x] Created MerchantService (getMe, getMerchant, updateMerchant)
+- [x] Created ChamberService (getChambers, getChamber, searchMembers)
+- [x] Updated ClaimWizardComponent (multi-step wizard with chamber select, business search, contact details, thank you)
+- [x] Fixed MerchantDashboardComponent (pending/stripe/suspended banners, stats, quick actions)
+- [x] Updated ClaimsAdminComponent (already existed with proper claim management UI)
+- [x] Verified routing in app.routes.ts (all routes already configured)
+- [x] Committed frontend implementation
+- [x] Portal builds successfully
 
-## Tasks Completed
+## Next Steps
+1. Push branch to origin ✅
+2. Manual testing of complete flow (merchant claim → admin approval → dashboard)
+3. Create sprint report documenting implementation
 
-### API Layer
-- ✅ ChamberMaster service (mock + live modes)
-  - ✅ Parse members_list_response format
-  - ✅ Parse member_details_response format
-  - ✅ Mock mode (reads from chambermaster_mock_data.json)
-  - ✅ Live mode (calls real API with X-ApiKey header)
-  - ✅ Environment variable toggle (CHAMBERMASTER_MOCK)
-- ✅ POST /api/chambers/:id/sync endpoint
-- ✅ GET /api/chambers/:id/members endpoint (with filtering)
-- ✅ GET /api/chambers/:id/sync-status endpoint
-
-### Portal Layer
-- ✅ Member roster page in chamber admin dashboard
-- ✅ Sync Now button with loading states
-- ✅ Sync status/history display
-- ✅ Member list table with search/filter
-
-## Next Step
-
-Commit and push all changes.
-
-## Blockers
-
-None.
+## Notes
+- SKIP email service (use logger.info() stubs)
+- SKIP notification badge UI (just create records in DB)
+- Approve endpoint must be transactional
+- Use ILIKE for business search (no fuzzy matching)
