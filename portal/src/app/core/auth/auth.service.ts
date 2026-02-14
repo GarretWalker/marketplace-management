@@ -86,7 +86,35 @@ export class AuthService {
         .from('profiles')
         .insert({
           id: data.user.id,
+          email: email,
           role: 'chamber_admin'
+        });
+
+      if (profileError) {
+        return { error: profileError };
+      }
+    }
+
+    return { error };
+  }
+
+  /**
+   * Register a new merchant
+   */
+  async signUpMerchant(email: string, password: string): Promise<{ error: any }> {
+    const { data, error } = await this.supabase.auth.signUp({
+      email,
+      password
+    });
+
+    if (!error && data.user) {
+      // Create profile with merchant role
+      const { error: profileError } = await this.supabase
+        .from('profiles')
+        .insert({
+          id: data.user.id,
+          email: email,
+          role: 'merchant'
         });
 
       if (profileError) {

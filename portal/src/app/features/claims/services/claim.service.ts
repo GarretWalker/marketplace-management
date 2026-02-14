@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { ApiService } from '../../../core/api/api.service';
+import { ApiService, ApiResponse } from '../../../core/api/api.service';
 import { Observable } from 'rxjs';
 import { ClaimRequest, CreateClaimInput, ClaimWithMemberData } from '../../../../../../shared/types/claim.types';
 import { Merchant } from '../../../../../../shared/types/merchant.types';
@@ -13,32 +13,33 @@ export class ClaimService {
   /**
    * Submit a new claim request
    */
-  submitClaim(input: CreateClaimInput): Observable<{ data: ClaimRequest }> {
-    return this.api.post<{ data: ClaimRequest }>('/claims', input);
+  submitClaim(input: CreateClaimInput): Observable<ApiResponse<ClaimRequest>> {
+    return this.api.post<ClaimRequest>('/claims', input);
   }
 
   /**
    * Get claims for a chamber
    */
-  getClaims(chamberId: string, status?: string): Observable<{ data: ClaimWithMemberData[] }> {
-    const params: any = { chamber_id: chamberId };
+  getClaims(chamberId: string, status?: string): Observable<ApiResponse<ClaimWithMemberData[]>> {
+    const queryParts: string[] = [`chamber_id=${chamberId}`];
     if (status) {
-      params.status = status;
+      queryParts.push(`status=${status}`);
     }
-    return this.api.get<{ data: ClaimWithMemberData[] }>('/claims', { params });
+    const queryString = '?' + queryParts.join('&');
+    return this.api.get<ClaimWithMemberData[]>(`/claims${queryString}`);
   }
 
   /**
    * Approve a claim
    */
-  approveClaim(claimId: string): Observable<{ data: Merchant }> {
-    return this.api.post<{ data: Merchant }>(`/claims/${claimId}/approve`, {});
+  approveClaim(claimId: string): Observable<ApiResponse<Merchant>> {
+    return this.api.post<Merchant>(`/claims/${claimId}/approve`, {});
   }
 
   /**
    * Deny a claim
    */
-  denyClaim(claimId: string, reason: string): Observable<{ data: { success: boolean } }> {
-    return this.api.post<{ data: { success: boolean } }>(`/claims/${claimId}/deny`, { reason });
+  denyClaim(claimId: string, reason: string): Observable<ApiResponse<{ success: boolean }>> {
+    return this.api.post<{ success: boolean }>(`/claims/${claimId}/deny`, { reason });
   }
 }

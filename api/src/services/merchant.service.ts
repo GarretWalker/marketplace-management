@@ -1,6 +1,54 @@
 import { supabase } from '../config/supabase';
 import { logger } from '../utils/logger';
-import { Merchant, UpdateMerchantInput } from '../../../shared/types/merchant.types';
+
+interface Merchant {
+  id: string;
+  chamberId: string;
+  cmMemberId?: string;
+  businessName: string;
+  slug: string;
+  description?: string;
+  logoUrl?: string;
+  coverImageUrl?: string;
+  contactEmail: string;
+  phone?: string;
+  websiteUrl?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  status: 'active' | 'pending' | 'suspended';
+  approvedAt?: string;
+  approvedBy?: string;
+  deactivatedAt?: string;
+  deactivationReason?: string;
+  stripeAccountId?: string;
+  stripeOnboardingComplete: boolean;
+  stripePayoutsEnabled: boolean;
+  offersLocalPickup: boolean;
+  offersFlatRate: boolean;
+  flatRateAmount?: number;
+  offersStandardShipping: boolean;
+  shippingNotes?: string;
+  totalProducts: number;
+  totalOrders: number;
+  totalRevenue: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface UpdateMerchantInput {
+  description?: string;
+  logoUrl?: string;
+  phone?: string;
+  websiteUrl?: string;
+  offersLocalPickup?: boolean;
+  offersFlatRate?: boolean;
+  flatRateAmount?: number;
+  offersStandardShipping?: boolean;
+  shippingNotes?: string;
+}
 
 export class MerchantService {
   /**

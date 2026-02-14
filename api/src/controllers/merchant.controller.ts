@@ -6,16 +6,17 @@ export class MerchantController {
   /**
    * GET /api/merchants/me - Get current merchant's record
    */
-  async getMe(req: Request, res: Response, next: NextFunction) {
+  async getMe(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.id;
       const merchant = await merchantService.getMerchantByUserId(userId);
 
       if (!merchant) {
-        return res.status(404).json({
+        res.status(404).json({
           data: null,
           error: { code: 'NOT_FOUND', message: 'Merchant record not found' }
         });
+        return;
       }
 
       res.json({ data: merchant, error: null });
@@ -28,17 +29,18 @@ export class MerchantController {
   /**
    * PUT /api/merchants/me - Update current merchant's settings
    */
-  async updateMe(req: Request, res: Response, next: NextFunction) {
+  async updateMe(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.id;
       
       // Get the merchant ID from profile
       const currentMerchant = await merchantService.getMerchantByUserId(userId);
       if (!currentMerchant) {
-        return res.status(404).json({
+        res.status(404).json({
           data: null,
           error: { code: 'NOT_FOUND', message: 'Merchant record not found' }
         });
+        return;
       }
 
       const merchant = await merchantService.updateMerchant(currentMerchant.id, req.body);

@@ -42,7 +42,7 @@ import { Merchant } from '../../../../../../shared/types/merchant.types';
         </div>
 
         <!-- Stripe Not Connected Banner -->
-        <div *ngIf="!isLoading && merchant && !merchant.stripe_account_id" class="mb-6 bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+        <div *ngIf="!isLoading && merchant && !merchant.stripeAccountId" class="mb-6 bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
           <div class="flex">
             <div class="flex-shrink-0">
               <svg class="h-6 w-6 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
@@ -122,21 +122,21 @@ import { Merchant } from '../../../../../../shared/types/merchant.types';
             <div class="grid md:grid-cols-2 gap-4">
               <div>
                 <div class="text-sm text-gray-600">Business Name</div>
-                <div class="font-semibold">{{ merchant.business_name }}</div>
+                <div class="font-semibold">{{ merchant.businessName }}</div>
               </div>
-              <div *ngIf="merchant.address_line1">
+              <div *ngIf="merchant.addressLine1">
                 <div class="text-sm text-gray-600">Address</div>
-                <div class="font-semibold">{{ merchant.address_line1 }}</div>
+                <div class="font-semibold">{{ merchant.addressLine1 }}</div>
                 <div class="text-sm text-gray-700">{{ merchant.city }}, {{ merchant.state }} {{ merchant.zip }}</div>
               </div>
               <div *ngIf="merchant.phone">
                 <div class="text-sm text-gray-600">Phone</div>
                 <div class="font-semibold">{{ merchant.phone }}</div>
               </div>
-              <div *ngIf="merchant.website">
+              <div *ngIf="merchant.websiteUrl">
                 <div class="text-sm text-gray-600">Website</div>
-                <a [href]="merchant.website" target="_blank" class="font-semibold text-blue-600 hover:text-blue-700">
-                  {{ merchant.website }}
+                <a [href]="merchant.websiteUrl" target="_blank" class="font-semibold text-blue-600 hover:text-blue-700">
+                  {{ merchant.websiteUrl }}
                 </a>
               </div>
             </div>

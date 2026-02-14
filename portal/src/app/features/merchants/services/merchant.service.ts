@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { ApiService } from '../../../core/api/api.service';
+import { ApiService, ApiResponse } from '../../../core/api/api.service';
 import { Observable } from 'rxjs';
 import { Merchant, UpdateMerchantInput } from '../../../../../../shared/types/merchant.types';
 
@@ -12,14 +12,14 @@ export class MerchantService {
   /**
    * Get current merchant's record
    */
-  getMe(): Observable<{ data: Merchant }> {
-    return this.api.get<{ data: Merchant }>('/merchants/me');
+  getMe(): Observable<ApiResponse<Merchant>> {
+    return this.api.get<Merchant>('/merchants/me');
   }
 
   /**
    * Update current merchant's settings
    */
-  updateMe(input: UpdateMerchantInput): Observable<{ data: Merchant }> {
-    return this.api.put<{ data: Merchant }>('/merchants/me', input);
+  updateMe(input: UpdateMerchantInput): Observable<ApiResponse<Merchant>> {
+    return this.api.put<Merchant>('/merchants/me', input);
   }
 }

@@ -60,9 +60,9 @@ import { ClaimWithMemberData } from '../../../../../../shared/types/claim.types'
             <div class="p-6">
               <div class="flex items-start justify-between mb-4">
                 <div class="flex-1">
-                  <h3 class="text-xl font-bold text-gray-900">{{ claim.member.business_name }}</h3>
+                  <h3 class="text-xl font-bold text-gray-900">{{ claim.memberData.businessName }}</h3>
                   <div class="mt-1 text-sm text-gray-600">
-                    Requested {{ claim.created_at | date:'short' }}
+                    Requested {{ claim.createdAt | date:'short' }}
                   </div>
                 </div>
                 <div class="ml-4">
@@ -85,23 +85,23 @@ import { ClaimWithMemberData } from '../../../../../../shared/types/claim.types'
                   <div class="space-y-2 text-sm">
                     <div>
                       <span class="text-gray-600">Business:</span>
-                      <span class="ml-2 font-medium">{{ claim.member.business_name }}</span>
+                      <span class="ml-2 font-medium">{{ claim.memberData.businessName }}</span>
                     </div>
-                    <div *ngIf="claim.member.address_line1">
+                    <div *ngIf="claim.memberData.address">
                       <span class="text-gray-600">Address:</span>
-                      <span class="ml-2 font-medium">{{ claim.member.address_line1 }}, {{ claim.member.city }}, {{ claim.member.state }} {{ claim.member.zip }}</span>
+                      <span class="ml-2 font-medium">{{ claim.memberData.address }}</span>
                     </div>
-                    <div *ngIf="claim.member.phone">
+                    <div *ngIf="claim.memberData.phone">
                       <span class="text-gray-600">Phone:</span>
-                      <span class="ml-2 font-medium">{{ claim.member.phone }}</span>
+                      <span class="ml-2 font-medium">{{ claim.memberData.phone }}</span>
                     </div>
-                    <div *ngIf="claim.member.email">
+                    <div *ngIf="claim.memberData.email">
                       <span class="text-gray-600">Email:</span>
-                      <span class="ml-2 font-medium">{{ claim.member.email }}</span>
+                      <span class="ml-2 font-medium">{{ claim.memberData.email }}</span>
                     </div>
-                    <div>
-                      <span class="text-gray-600">Member Status:</span>
-                      <span class="ml-2 font-medium">{{ claim.member.member_status }}</span>
+                    <div *ngIf="claim.memberData.category">
+                      <span class="text-gray-600">Category:</span>
+                      <span class="ml-2 font-medium">{{ claim.memberData.category }}</span>
                     </div>
                   </div>
                 </div>
@@ -112,15 +112,15 @@ import { ClaimWithMemberData } from '../../../../../../shared/types/claim.types'
                   <div class="space-y-2 text-sm">
                     <div>
                       <span class="text-gray-600">Contact Name:</span>
-                      <span class="ml-2 font-medium">{{ claim.contact_name }}</span>
+                      <span class="ml-2 font-medium">{{ claim.contactName }}</span>
                     </div>
                     <div>
                       <span class="text-gray-600">Contact Email:</span>
-                      <span class="ml-2 font-medium">{{ claim.contact_email }}</span>
+                      <span class="ml-2 font-medium">{{ claim.contactEmail }}</span>
                     </div>
-                    <div *ngIf="claim.contact_phone">
+                    <div *ngIf="claim.contactPhone">
                       <span class="text-gray-600">Contact Phone:</span>
-                      <span class="ml-2 font-medium">{{ claim.contact_phone }}</span>
+                      <span class="ml-2 font-medium">{{ claim.contactPhone }}</span>
                     </div>
                     <div *ngIf="claim.message">
                       <span class="text-gray-600">Message:</span>
@@ -148,13 +148,13 @@ import { ClaimWithMemberData } from '../../../../../../shared/types/claim.types'
 
               <!-- Approved/Denied Info -->
               <div *ngIf="claim.status === 'approved'" class="p-3 bg-green-50 border border-green-200 rounded-lg text-green-800">
-                <strong>Approved</strong> on {{ claim.approved_at | date:'short' }}
-                <span *ngIf="claim.approved_by"> by Admin</span>
+                <strong>Approved</strong> on {{ claim.resolvedAt | date:'short' }}
+                <span *ngIf="claim.resolvedBy"> by Admin</span>
               </div>
               <div *ngIf="claim.status === 'denied'" class="p-3 bg-red-50 border border-red-200 rounded-lg text-red-800">
-                <strong>Denied</strong> on {{ claim.denied_at | date:'short' }}
-                <span *ngIf="claim.denial_reason">
-                  <br><span class="text-sm">Reason: {{ claim.denial_reason }}</span>
+                <strong>Denied</strong> on {{ claim.resolvedAt | date:'short' }}
+                <span *ngIf="claim.denialReason">
+                  <br><span class="text-sm">Reason: {{ claim.denialReason }}</span>
                 </span>
               </div>
             </div>
@@ -228,7 +228,7 @@ export class ClaimsAdminComponent implements OnInit {
     
     this.claimService.getClaims(profile.chamber_id, status).subscribe({
       next: (response) => {
-        this.claims = response.data;
+        this.claims = response.data || [];
         
         // Update pending count
         const pendingCount = this.claims.filter(c => c.status === 'pending').length;
@@ -244,7 +244,7 @@ export class ClaimsAdminComponent implements OnInit {
   }
 
   async approveClaim(claim: ClaimWithMemberData) {
-    if (!confirm(`Approve claim for ${claim.member.business_name}?`)) {
+    if (!confirm(`Approve claim for ${claim.memberData.businessName}?`)) {
       return;
     }
 

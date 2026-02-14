@@ -1,12 +1,79 @@
 import { supabase } from '../config/supabase';
 import { logger } from '../utils/logger';
-import { 
-  ClaimRequest, 
-  CreateClaimInput, 
-  ClaimWithMemberData 
-} from '../../../shared/types/claim.types';
-import { Merchant } from '../../../shared/types/merchant.types';
 import { generateSlug } from '../utils/slug';
+
+interface CreateClaimInput {
+  chamberId: string;
+  cmMemberId: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone?: string;
+  message?: string;
+}
+
+interface ClaimRequest {
+  id: string;
+  chamberId: string;
+  cmMemberId: string;
+  requestedBy: string;
+  contactEmail: string;
+  contactName: string;
+  contactPhone?: string;
+  message?: string;
+  status: 'pending' | 'approved' | 'denied';
+  resolvedBy?: string;
+  resolvedAt?: string;
+  denialReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface ClaimWithMemberData extends ClaimRequest {
+  memberData: {
+    businessName: string;
+    email?: string;
+    phone?: string;
+    address: string;
+    category?: string;
+  };
+}
+
+interface Merchant {
+  id: string;
+  chamberId: string;
+  cmMemberId?: string;
+  businessName: string;
+  slug: string;
+  description?: string;
+  logoUrl?: string;
+  coverImageUrl?: string;
+  contactEmail: string;
+  phone?: string;
+  websiteUrl?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  status: 'active' | 'pending' | 'suspended';
+  approvedAt?: string;
+  approvedBy?: string;
+  deactivatedAt?: string;
+  deactivationReason?: string;
+  stripeAccountId?: string;
+  stripeOnboardingComplete: boolean;
+  stripePayoutsEnabled: boolean;
+  offersLocalPickup: boolean;
+  offersFlatRate: boolean;
+  flatRateAmount?: number;
+  offersStandardShipping: boolean;
+  shippingNotes?: string;
+  totalProducts: number;
+  totalOrders: number;
+  totalRevenue: number;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export class ClaimService {
   /**
