@@ -78,15 +78,25 @@ export const chamberController = {
   /**
    * Trigger ChamberMaster sync
    * POST /api/chambers/:id/sync
+   *
+   * Initiates a manual sync of member data from ChamberMaster API to local database.
+   * Uses the chamber's stored ChamberMaster credentials (association ID and API key).
+   * Creates a sync_log entry to track the operation.
+   *
+   * @param req.params.id - Chamber ID to sync
+   * @returns SyncResult with counts of members added/updated/deactivated
+   * @throws 404 if chamber not found
+   * @throws 400 if ChamberMaster integration not configured
+   * @throws 500 if sync fails
    */
   async syncChamberMaster(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const chamberId = req.params.id;
-      
+
       // Get chamber details to retrieve ChamberMaster config
       const { data: chamber, error: chamberError } = await supabase
         .from('chambers')
-        .select('chambermaster_customer_id, chambermaster_api_key, chambermaster_base_url')
+        .select('chambermaster_association_id, chambermaster_api_key, chambermaster_base_url')
         .eq('id', chamberId)
         .single();
 
@@ -98,7 +108,7 @@ export const chamberController = {
         return;
       }
 
-      if (!chamber.chambermaster_customer_id || !chamber.chambermaster_api_key) {
+      if (!chamber.chambermaster_association_id || !chamber.chambermaster_api_key) {
         res.status(400).json({
           data: null,
           error: { code: 'INVALID_CONFIG', message: 'ChamberMaster integration not configured' }
@@ -106,10 +116,10 @@ export const chamberController = {
         return;
       }
 
-      // Trigger sync
+      // Trigger sync with the chamber's ChamberMaster association ID
       const result = await chamberMasterService.syncMembers(
         chamberId,
-        chamber.chambermaster_customer_id,
+        chamber.chambermaster_association_id,
         chamber.chambermaster_api_key,
         chamber.chambermaster_base_url || 'http://secure2.chambermaster.com/api'
       );
@@ -130,6 +140,18 @@ export const chamberController = {
   /**
    * Get synced members for a chamber
    * GET /api/chambers/:id/members
+   *
+   * Retrieves the list of ChamberMaster members that have been synced to the database.
+   * Supports filtering by status, claimed status, and search by business name.
+   * Returns paginated results.
+   *
+   * @param req.params.id - Chamber ID
+   * @param req.query.status - Filter by member status (active/inactive/prospective)
+   * @param req.query.is_claimed - Filter by claimed status (true/false)
+   * @param req.query.search - Search by business name (case-insensitive partial match)
+   * @param req.query.page - Page number (default: 1)
+   * @param req.query.limit - Items per page (default: 50)
+   * @returns Paginated list of members with meta information
    */
   async getMembers(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
@@ -187,6 +209,12 @@ export const chamberController = {
   /**
    * Get sync status for a chamber
    * GET /api/chambers/:id/sync-status
+   *
+   * Returns information about the most recent ChamberMaster sync for this chamber.
+   * Includes the last sync timestamp and the results (members added/updated/deactivated).
+   *
+   * @param req.params.id - Chamber ID
+   * @returns Object with lastSyncAt timestamp and lastSyncResult details
    */
   async getSyncStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {

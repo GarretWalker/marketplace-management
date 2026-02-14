@@ -101,21 +101,28 @@ export class MemberRosterComponent implements OnInit {
     if (!profile?.chamber_id) return;
 
     this.isSyncing = true;
+    console.log('Starting ChamberMaster sync...');
 
     this.chamberService.syncChamberMaster(profile.chamber_id).subscribe({
       next: (response) => {
         this.isSyncing = false;
         if (response.data?.success) {
-          alert(`Sync completed! Added: ${response.data.membersAdded}, Updated: ${response.data.membersUpdated}, Deactivated: ${response.data.membersDeactivated}`);
+          const result = response.data;
+          console.log('✅ Sync completed successfully!', {
+            membersAdded: result.membersAdded,
+            membersUpdated: result.membersUpdated,
+            membersDeactivated: result.membersDeactivated
+          });
+          console.log(`📊 Summary: Added ${result.membersAdded}, Updated ${result.membersUpdated}, Deactivated ${result.membersDeactivated}`);
           this.loadData(); // Reload both members and sync status
         } else {
-          alert(`Sync failed: ${response.data?.errorMessage || 'Unknown error'}`);
+          console.error('❌ Sync failed:', response.data?.errorMessage || 'Unknown error');
         }
       },
       error: (err) => {
         this.isSyncing = false;
-        console.error('Sync failed:', err);
-        alert('Sync failed. See console for details.');
+        console.error('❌ Sync failed with error:', err);
+        console.error('Check the network tab and server logs for more details.');
       }
     });
   }

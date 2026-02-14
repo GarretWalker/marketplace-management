@@ -4,6 +4,24 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { logger } from '../../utils/logger';
 
+/**
+ * ChamberMaster Integration Service
+ *
+ * Handles synchronization of member data from ChamberMaster API to local database.
+ * Supports both mock mode (for development/testing) and live mode (production).
+ *
+ * Key Features:
+ * - Mock/Live mode toggle via CHAMBERMASTER_MOCK environment variable
+ * - Parses both member list and detailed member formats
+ * - Upserts members (adds new, updates existing, tracks deactivations)
+ * - Logs all sync operations to sync_log table
+ * - Maps ChamberMaster status codes to our simplified status enum
+ *
+ * Environment Variables:
+ * - CHAMBERMASTER_MOCK: Set to 'true' to use mock data instead of live API
+ * - CHAMBERMASTER_MOCK_PATH: Optional path to mock data JSON file
+ */
+
 // ChamberMaster status codes
 export enum ChamberMasterStatus {
   Prospective = 1,
@@ -108,13 +126,24 @@ export class ChamberMasterService {
   constructor(supabase: SupabaseClient) {
     this.supabase = supabase;
     this.useMock = process.env.CHAMBERMASTER_MOCK === 'true';
-    this.mockDataPath = path.join(process.cwd(), '../../chambermaster_mock_data.json');
+
+    // Use __dirname for reliable path resolution
+    // Falls back to environment variable if provided
+    this.mockDataPath =
+      process.env.CHAMBERMASTER_MOCK_PATH ||
+      path.join(__dirname, '../../../../chambermaster_mock_data.json');
 
     logger.info(`ChamberMaster service initialized in ${this.useMock ? 'MOCK' : 'LIVE'} mode`);
   }
 
   /**
    * Initialize the HTTP client for live mode
+   *
+   * Creates an Axios instance configured for ChamberMaster API calls.
+   * Only called when not in mock mode.
+   *
+   * @param baseUrl - ChamberMaster API base URL (e.g., http://secure2.chambermaster.com/api)
+   * @param apiKey - Chamber's ChamberMaster API key
    */
   private initClient(baseUrl: string, apiKey: string): void {
     if (this.useMock) return;
@@ -131,6 +160,13 @@ export class ChamberMasterService {
 
   /**
    * Fetch members list from ChamberMaster API or mock data
+   *
+   * In live mode: Calls GET /associations({customerId})/members with optional status filter
+   * In mock mode: Reads from mock data file and filters locally
+   *
+   * @param customerId - ChamberMaster association/customer ID
+   * @param statusFilter - Optional ChamberMaster status code to filter by (e.g., 2 for Active)
+   * @returns Array of member list records (basic fields)
    */
   private async fetchMembersList(customerId: string, statusFilter?: number): Promise<CMListMember[]> {
     if (this.useMock) {
@@ -153,6 +189,15 @@ export class ChamberMasterService {
 
   /**
    * Fetch member details from ChamberMaster API or mock data
+   *
+   * In live mode: Calls GET /associations({customerId})/members/details
+   * In mock mode: Reads from mock data file
+   *
+   * This endpoint returns more complete member information than the list endpoint,
+   * including address, categories, contact details, etc.
+   *
+   * @param customerId - ChamberMaster association/customer ID
+   * @returns Array of detailed member records
    */
   private async fetchMemberDetails(customerId: string): Promise<CMDetailedMember[]> {
     if (this.useMock) {
@@ -174,6 +219,12 @@ export class ChamberMasterService {
 
   /**
    * Load mock data from JSON file
+   *
+   * Reads the chambermaster_mock_data.json file which contains sample member data
+   * for development and testing without calling the real ChamberMaster API.
+   *
+   * @returns Parsed JSON object with members_list_response and member_details_response
+   * @throws Error if file not found or invalid JSON
    */
   private async loadMockData(): Promise<any> {
     try {
@@ -212,6 +263,18 @@ export class ChamberMasterService {
 
   /**
    * Map ChamberMaster member to our database format
+   *
+   * Transforms ChamberMaster's data structure to our chambermaster_members table schema.
+   * Handles both list and detailed member formats.
+   *
+   * Key transformations:
+   * - Maps status codes to our simplified enum (active/inactive/prospective)
+   * - Extracts first category if multiple categories exist
+   * - Uses DisplayName over Name if available
+   * - Handles optional fields gracefully
+   *
+   * @param member - ChamberMaster member data (list or detail format)
+   * @returns Mapped member ready for database insertion
    */
   private mapMemberToDatabase(member: CMListMember | CMDetailedMember): MappedChamberMember {
     // Determine member status based on status code
@@ -257,6 +320,28 @@ export class ChamberMasterService {
 
   /**
    * Sync members from ChamberMaster to database
+   *
+   * Main sync operation that:
+   * 1. Creates a sync_log entry to track the operation
+   * 2. Fetches members from ChamberMaster API (or mock data)
+   * 3. Upserts each member into chambermaster_members table
+   * 4. Tracks counts of added/updated/deactivated members
+   * 5. Updates chamber's chambermaster_last_sync_at timestamp
+   * 6. Marks sync_log as completed or failed
+   *
+   * Upsert logic:
+   * - If member exists (by cm_member_id): updates record and tracks if status changed to inactive
+   * - If member doesn't exist: inserts new record
+   *
+   * Fallback strategy:
+   * - First attempts to fetch detailed member data (more complete info)
+   * - If that fails, falls back to list format with active filter
+   *
+   * @param chamberId - Our database chamber ID
+   * @param customerId - ChamberMaster association/customer ID
+   * @param apiKey - ChamberMaster API key
+   * @param baseUrl - ChamberMaster API base URL (default: http://secure2.chambermaster.com/api)
+   * @returns SyncResult with success flag and counts
    */
   async syncMembers(
     chamberId: string,
@@ -294,6 +379,7 @@ export class ChamberMasterService {
       }
 
       // Fetch members (try detailed format first, fall back to list)
+      // Details format is preferred as it includes more complete information (address, categories, etc.)
       let members: (CMListMember | CMDetailedMember)[];
       try {
         // Try to get detailed member data
@@ -301,6 +387,7 @@ export class ChamberMasterService {
         logger.info('Fetched members in details format');
       } catch (detailsError) {
         // Fall back to list format with active filter
+        // Some ChamberMaster accounts may not have the details endpoint enabled
         logger.info('Details endpoint failed, falling back to list format with active filter');
         members = await this.fetchMembersList(customerId, ChamberMasterStatus.Active);
       }
@@ -398,6 +485,11 @@ export class ChamberMasterService {
 
   /**
    * Get sync status for a chamber
+   *
+   * Returns information about the most recent ChamberMaster sync.
+   *
+   * @param chamberId - Chamber ID to get sync status for
+   * @returns Object containing last sync timestamp and most recent sync log entry
    */
   async getSyncStatus(chamberId: string): Promise<{
     lastSyncAt: string | null;
