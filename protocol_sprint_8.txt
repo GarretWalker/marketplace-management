@@ -1,0 +1,73 @@
+================================================================================
+  SPRINT 8 — SHOPIFY INTEGRATION
+================================================================================
+
+Read protocol_core.txt first. This file defines Sprint 8 scope only.
+
+GOAL: Merchants with Shopify stores connect them and auto-import products.
+
+================================================================================
+  SCOPE — ALLOWED FILES
+================================================================================
+
+  ✅ /portal: features/integrations/ (Shopify connection UI)
+  ✅ /api: services/integrations/shopify.*, webhooks/shopify.*
+  ✅ /api: routes/integration.*, controllers/integration.*
+  ❌ Square integration, new features, consumer site changes
+
+================================================================================
+  REFERENCE FILES
+================================================================================
+
+  - api/src/services/integrations/chambermaster.service.ts (integration pattern)
+  - api/src/services/product.service.ts (product creation pattern)
+
+================================================================================
+  API ENDPOINTS
+================================================================================
+
+  GET /api/integrations/shopify/auth?merchant_id=X
+    - Redirect to Shopify OAuth consent screen
+
+  GET /api/integrations/shopify/callback
+    - Exchange code for access token
+    - Store in merchant_integrations table
+
+  POST /api/integrations/shopify/sync
+    - Fetch all products via Shopify Admin API (GraphQL, NOT REST)
+    - Map Shopify products to products table schema
+    - Download and re-upload product images to Supabase Storage
+    - Set source = 'shopify', store external_id
+    - Handle variants (map to individual products)
+
+  POST /api/webhooks/shopify
+    - Verify webhook HMAC signature (REQUIRED)
+    - products/update → update product in DB
+    - products/delete → archive product in DB
+    - inventory_levels/update → update quantity
+
+================================================================================
+  PORTAL UI
+================================================================================
+
+  "Connect Shopify" in merchant dashboard:
+    - Button initiating OAuth flow
+    - After connection: sync status, last sync time, products synced count
+    - "Sync Now" manual trigger
+    - "Disconnect" option
+
+  Shopify-synced product indicator:
+    - Badge/icon showing source on product list
+    - Synced fields are read-only on edit form
+
+================================================================================
+  IMPORTANT NOTES
+================================================================================
+
+  - Use Shopify GraphQL Admin API, NOT the REST API (legacy)
+  - Need a Shopify app in Partners dashboard for API credentials
+  - If no network access, build with mock service following ChamberMaster
+    pattern (chambermaster.mock.ts) and flag in BLOCKERS.md
+  - All products imported still go through YOUR checkout with Stripe Connect
+  - Verify webhook HMAC signatures on all incoming webhooks
+================================================================================

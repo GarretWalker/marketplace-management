@@ -1,0 +1,112 @@
+================================================================================
+  SPRINT 6 — CONSUMER MARKETPLACE
+================================================================================
+
+Read protocol_core.txt first. This file defines Sprint 6 scope only.
+
+GOAL: Public-facing consumer site where shoppers browse products and stores.
+This is a SECOND Angular application, separate from the portal.
+
+================================================================================
+  SCOPE — ALLOWED FILES
+================================================================================
+
+  ✅ /consumer-marketplace: ALL (first build of consumer app)
+  ✅ /api: routes/public.*, controllers/public.* (public endpoints)
+  ❌ Checkout, orders, Shopify/Square integrations
+  ❌ Do NOT modify the portal app
+
+================================================================================
+  REFERENCE FILES (read these for patterns)
+================================================================================
+
+  - api/src/routes/chamber.routes.ts (route pattern)
+  - api/src/controllers/chamber.controller.ts (controller pattern)
+  - portal/src/app/app.routes.ts (routing structure reference)
+
+================================================================================
+  URL STRUCTURE
+================================================================================
+
+  /:chamberSlug — chamber homepage (e.g., /cullman)
+  /:chamberSlug/products — browse all products
+  /:chamberSlug/stores — store directory
+  /:chamberSlug/store/:merchantSlug — single store page
+  /:chamberSlug/product/:productId — product detail page
+  /:chamberSlug/cart — shopping cart
+
+  The chamber slug is a route parameter that loads branding from the database.
+
+================================================================================
+  PUBLIC API ENDPOINTS (no auth required)
+================================================================================
+
+  GET /api/public/chambers/:slug — chamber info + branding
+  GET /api/public/chambers/:slug/products — all active products
+    - Filter by: category, search query, merchant
+    - Sort by: newest, price low-high, price high-low
+    - Pagination
+  GET /api/public/chambers/:slug/merchants — active merchants
+  GET /api/public/merchants/:slug — single merchant + their products
+  GET /api/public/products/:id — single product detail
+  GET /api/public/categories — list all categories
+
+================================================================================
+  CONSUMER APP PAGES
+================================================================================
+
+  Chamber Homepage:
+    - Hero section with chamber logo, colors, tagline, hero image
+    - Featured products grid
+    - Browse by category section
+    - "Meet the Stores" merchant highlights
+
+  Category/Browse Page:
+    - Product grid filtered by category
+    - Products from ALL merchants mixed together
+    - Sort by: newest, price low-high, price high-low
+    - Pagination
+
+  Search:
+    - Search bar in header
+    - Searches product names, descriptions, merchant names
+    - Results page with product cards
+
+  Product Detail Page:
+    - Image gallery
+    - Product name, description, price
+    - Quantity selector
+    - "Add to Cart" button
+    - Store info card (merchant name, link to store page)
+
+  Store Directory:
+    - Grid of all active merchants
+    - Each card: logo/placeholder, name, category, product count
+
+  Single Store Page:
+    - Merchant banner/description
+    - Grid of their active products
+
+  Shopping Cart:
+    - Single-merchant cart constraint
+    - If user adds from different store, warn and offer to replace cart
+    - Cart: items, quantities, subtotal
+    - "Proceed to Checkout" button (links nowhere yet — Sprint 7)
+
+  Dynamic Chamber Branding:
+    - Read chamber config from API (logo, primary color, accent color, tagline)
+    - Apply to header, accents, footer
+    - If chamber not found: show "Coming Soon" page
+
+================================================================================
+  IMPORTANT NOTES
+================================================================================
+
+  - This must look PREMIUM. Clean typography, generous whitespace, polished
+    product cards, smooth transitions. This is what chamber presidents judge.
+  - Mobile responsive is NOT optional — mobile-first design.
+  - Cart is local only (localStorage or state) — no cart API yet.
+  - NO checkout in this sprint — cart only.
+  - Products from multiple stores mix together on browse pages.
+  - Chamber branding should feel natural, not a template with logo swapped.
+================================================================================

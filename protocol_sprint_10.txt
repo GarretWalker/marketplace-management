@@ -1,0 +1,88 @@
+================================================================================
+  SPRINT 10 — POLISH, NOTIFICATIONS & LAUNCH PREP
+================================================================================
+
+Read protocol_core.txt first. This file defines Sprint 10 scope only.
+
+GOAL: Everything needed to launch the Cullman pilot. Polish UI, build
+notifications, add analytics basics, prepare for real users.
+
+================================================================================
+  SCOPE — ALLOWED FILES
+================================================================================
+
+  ✅ All directories (polish, notifications, final touches)
+  ✅ /api: services/notification.*, services/email.*
+  ❌ No new major features
+
+================================================================================
+  NOTIFICATIONS
+================================================================================
+
+  Email notifications (wire up real email service — Resend/SendGrid/Postmark):
+    - Chamber invitation emails (admin sends to members)
+    - Claim approved / denied emails
+    - New order notification (to merchant)
+    - Order shipped / ready for pickup (to customer)
+    - Order confirmation (to customer)
+    - Low stock alerts (to merchant)
+
+  In-app notification center:
+    - Bell icon in portal header with unread count
+    - Dropdown showing recent notifications
+    - Mark as read / mark all as read
+
+================================================================================
+  CHAMBER ADMIN DASHBOARD (FINAL)
+================================================================================
+
+  Adoption metrics:
+    - Total members vs onboarded merchants
+    - Products listed count
+    - Orders placed / revenue generated
+
+  "Launch" toggle:
+    - Chamber admin flips marketplace live when ready
+
+  Invitation tool:
+    - Generate invitation link with chamber pre-selected
+    - Bulk email option
+
+================================================================================
+  CONSUMER SITE POLISH
+================================================================================
+
+  - "Coming Soon" page for unlaunched chambers
+  - SEO basics (meta tags, Open Graph, page titles)
+  - Image lazy loading, pagination optimization
+  - 404 and error pages
+  - Footer with terms, privacy, contact links
+
+================================================================================
+  MERCHANT PORTAL POLISH
+================================================================================
+
+  - Onboarding progress indicator (claim → stripe → products → live)
+  - Empty states for all pages
+  - Mobile-friendly / responsive
+
+================================================================================
+  LEGAL PAGES
+================================================================================
+
+  - Terms of Service
+  - Privacy Policy
+  - Merchant Agreement
+  - Return/Refund policy template
+
+================================================================================
+  IMPORTANT NOTES
+================================================================================
+
+  - This sprint is about polish, not new features
+  - Every page should have proper loading states and error states
+  - Empty states should guide the user ("No products yet — add your first!")
+  - Mobile responsive across both apps
+  - Test the full flow end-to-end: register → claim → approve → stripe →
+    add products → consumer browses → checkout → order management
+================================================================================

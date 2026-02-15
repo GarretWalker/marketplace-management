@@ -1,0 +1,121 @@
+================================================================================
+  SPRINT 7 — CHECKOUT & ORDER FLOW
+================================================================================
+
+Read protocol_core.txt first. This file defines Sprint 7 scope only.
+
+GOAL: Customers complete purchases. Money flows from customer to merchant
+via Stripe Connect using DIRECT CHARGES. Merchant receives and manages orders.
+
+================================================================================
+  SCOPE — ALLOWED FILES
+================================================================================
+
+  ✅ /consumer-marketplace: features/checkout/, features/orders/
+  ✅ /portal: features/orders/ (merchant order management)
+  ✅ /api: routes/order.*, controllers/order.*, services/order.*
+  ✅ /api: webhooks/stripe.* (payment events)
+  ❌ Shopify/Square integrations
+
+================================================================================
+  REFERENCE FILES
+================================================================================
+
+  - api/src/services/claim.service.ts (transaction pattern)
+  - api/src/services/stripe-connect.* (Stripe patterns from Sprint 4)
+  - consumer-marketplace app structure from Sprint 6
+
+================================================================================
+  CHARGE MODEL — DIRECT CHARGES (CRITICAL)
+================================================================================
+
+  Use DIRECT CHARGES, not destination charges. The payment is created
+  on the merchant's connected account using the Stripe-Account header.
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: totalInCents,
+    currency: 'usd',
+    application_fee_amount: platformFeeInCents,
+  }, {
+    stripeAccount: merchant.stripe_account_id
+  });
+
+  This means:
+  - Customer's card statement shows the MERCHANT's name
+  - Disputes go to the MERCHANT, not the platform
+  - Platform collects application_fee automatically
+
+  Do NOT use transfer_data.destination — that is destination charges.
+
+================================================================================
+  API ENDPOINTS
+================================================================================
+
+  POST /api/orders — create order
+    - Validate product availability (check stock)
+    - Calculate subtotal, shipping, platform fee
+    - Tax: set to $0.00 (placeholder calculateTax function)
+    - Create Stripe PaymentIntent with DIRECT CHARGE
+    - Create order + order_items records
+    - Stub email: logger.info() for order confirmation + merchant notification
+
+  POST /api/orders/:id/ship — merchant adds tracking number
+  POST /api/orders/:id/ready-for-pickup — merchant marks ready
+  POST /api/orders/:id/cancel — cancel order, restore inventory, refund via Stripe
+  POST /api/orders/:id/refund — process full or partial refund
+
+  POST /api/stripe/webhook — handle payment events
+    - payment_intent.succeeded → update order status
+    - payment_intent.payment_failed → handle failure
+    - Verify Stripe signature (REQUIRED)
+
+================================================================================
+  CONSUMER APP — CHECKOUT
+================================================================================
+
+  Checkout Page:
+    - Order summary (items, quantities, prices)
+    - Fulfillment selection (if merchant offers multiple options)
+    - Shipping address form (if shipping selected)
+    - Customer info: name, email, phone
+    - Tax: display "$0.00" with no special messaging
+    - Order total
+    - Stripe Payment Element (Stripe.js Elements — NEVER handle raw cards)
+    - "Place Order" button
+
+  Order Confirmation Page:
+    - Order number
+    - Summary of what was ordered
+    - Fulfillment details
+    - "You'll receive an email confirmation"
+
+  Guest checkout — no account required to buy.
+
+================================================================================
+  PORTAL APP — MERCHANT ORDER MANAGEMENT
+================================================================================
+
+  Orders Page:
+    - List of all orders, newest first
+    - Filter by status
+    - Each row: order number, customer name, total, status, date
+
+  Order Detail Page:
+    - Customer info, items ordered, fulfillment type, shipping address
+    - Payment status
+    - Action buttons:
+      - "Mark as Shipped" (enter tracking number)
+      - "Ready for Pickup"
+      - "Cancel Order" / "Refund"
+
+================================================================================
+  IMPORTANT NOTES
+================================================================================
+
+  - DIRECT CHARGES on merchant's connected account, NOT destination charges
+  - Stripe.js Elements for payment — never handle raw card data server-side
+  - Tax = $0.00 for now (placeholder function, no tax API)
+  - Skip order confirmation step — orders go straight to "Processing"
+  - Stub all emails with logger.info()
+  - Guest checkout, no account required
+================================================================================

@@ -1,0 +1,103 @@
+================================================================================
+                    SHOP LOCAL MARKETPLACE - CORE PROTOCOL
+                         Universal Rules for All Sprints
+================================================================================
+
+⚠️  HARD STOP RULE — If ANY operation fails 3 times:
+  1. STOP ALL WORK IMMEDIATELY.
+  2. Document the problem in BLOCKERS.md (what failed, what you tried, errors).
+  3. Report the problem through Discord.
+  4. WAIT for Garret to respond. Do NOT continue working.
+
+================================================================================
+  WORKFLOW
+================================================================================
+
+You are the EXECUTION layer. You build what has been specified.
+- Read protocol_core.txt and the sprint-specific protocol before starting.
+- Check PROGRESS.md to see if work was already started.
+- Implement the sprint tasks as specified.
+- When complete, STOP and report what you built.
+- NEVER start the next sprint without explicit approval.
+
+================================================================================
+  TECH STACK
+================================================================================
+
+Frontend:        Angular (TypeScript) — portal app
+Backend API:     Node.js (TypeScript) with Express
+Database:        Supabase (PostgreSQL + Auth + Storage)
+Payments:        Stripe Connect
+Email:           Stubbed with logger.info() until wired up
+
+If any other document contradicts this, this is correct.
+
+================================================================================
+  TOKEN & COST GUARDRAILS
+================================================================================
+
+- Maximum 3 attempts on ANY failed operation — then STOP
+- Do NOT run infinite loops, recursive API calls, or unbounded retries
+- Do NOT repeatedly regenerate large files — edit incrementally
+- Do NOT run full test suites to debug a single test
+- Get structure right first, then polish — don't iterate on styling
+- Prefer small, focused commits over large rewrites
+
+================================================================================
+  COMMIT CONVENTIONS
+================================================================================
+
+Branch: feature/sprint-{N}-{brief-description}
+One branch per sprint.
+
+Commit messages:
+  [S{N}] feat: description
+  [S{N}] fix: description
+  [S{N}] test: description
+  [S{N}] chore: description
+
+Aim for 5-15 commits per sprint. Do NOT merge to main — Garret will merge.
+
+================================================================================
+  SECURITY RULES (NON-NEGOTIABLE)
+================================================================================
+
+- NEVER store raw API keys in code or committed files
+- NEVER log secrets or tokens
+- NEVER handle raw credit card data
+- NEVER expose stack traces to clients
+- NEVER bypass auth middleware on non-public endpoints
+- NEVER use Supabase service_role_key from Angular
+- ALWAYS verify webhook signatures
+- ALWAYS parameterize queries
+- ALWAYS sanitize user input
+- ALWAYS filter queries by authenticated user's context
+
+================================================================================
+  QUALITY CHECKLIST (BEFORE REPORTING COMPLETE)
+================================================================================
+
+[ ] No operation retried more than 3 times
+[ ] Application builds without errors (npm run build)
+[ ] No console.log in committed code (use Pino logger)
+[ ] No hardcoded secrets
+[ ] No commented-out code blocks
+[ ] All API endpoints follow { data, error, meta } envelope
+[ ] All non-public endpoints have auth middleware
+[ ] Commit messages follow [SN] format
+[ ] SPRINT_REPORT_{N}.md created
+[ ] PROGRESS.md updated
+
+================================================================================
+  SPRINT COMPLETION REPORT FORMAT
+================================================================================
+
+Create SPRINT_REPORT_{N}.md with:
+- Summary of what was built
+- Tasks completed (checklist)
+- Files created/modified
+- Known issues
+- Blockers (if any)
+- Dependencies added
+- Notes for review
+================================================================================

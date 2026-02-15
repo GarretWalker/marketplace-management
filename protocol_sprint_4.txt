@@ -1,0 +1,78 @@
+================================================================================
+  SPRINT 4 — STRIPE CONNECT & MERCHANT PAYMENTS
+================================================================================
+
+Read protocol_core.txt first. This file defines Sprint 4 scope only.
+
+GOAL: Merchants connect Stripe accounts to receive payments.
+
+================================================================================
+  SCOPE — ALLOWED FILES
+================================================================================
+
+  ✅ /portal: features/merchants/ (Stripe setup, settings page)
+  ✅ /api: routes/stripe.*, services/stripe-connect.*, webhooks/stripe.*
+  ✅ /api: routes/merchant.* (stripe-status endpoint)
+  ❌ Products, orders, consumer site
+
+================================================================================
+  REFERENCE FILES (read these for patterns, do NOT modify)
+================================================================================
+
+  - api/src/routes/chamber.routes.ts (route pattern)
+  - api/src/middleware/auth.middleware.ts (auth pattern)
+  - api/src/controllers/claim.controller.ts (controller pattern)
+  - portal/src/app/app.routes.ts (routing pattern)
+
+================================================================================
+  API ENDPOINTS
+================================================================================
+
+  POST /api/stripe/onboard
+    - Create Stripe Express connected account
+    - Return Stripe onboarding URL (Account Links API)
+    - Merchant redirects to Stripe hosted onboarding
+
+  GET /api/stripe/callback
+    - Handle return from Stripe onboarding
+    - Update merchant.stripe_account_id
+    - Update merchant.stripe_onboarding_complete
+
+  POST /api/stripe/webhook
+    - Verify Stripe signature (REQUIRED)
+    - Handle account.updated → update payouts_enabled status
+
+  GET /api/merchants/:id/stripe-status
+    - Return whether Stripe is fully set up
+
+================================================================================
+  PORTAL UI
+================================================================================
+
+  Merchant Dashboard — Stripe Setup:
+    - Prominent "Set Up Payments" card if Stripe not connected
+    - Button text: "Set Up Payments" (NOT "Connect Stripe")
+    - On click: redirect to Stripe hosted onboarding
+    - On return: show success/pending state
+    - Green check if payments enabled, yellow warning if pending
+
+  Merchant Settings Page:
+    - Business info (editable)
+    - Stripe account status display
+    - Shipping/fulfillment toggles:
+      - Local pickup (on/off)
+      - Flat rate shipping (on/off) + amount input
+      - Standard shipping (on/off)
+      - Shipping notes text field
+
+================================================================================
+  IMPORTANT NOTES
+================================================================================
+
+  - Use Stripe Express accounts, not Standard
+  - Use Stripe TEST MODE keys (sk_test_*)
+  - All Stripe API calls happen server-side only
+  - Webhook endpoint MUST verify Stripe signature
+  - If no network access, build all services but flag in BLOCKERS.md
+    that real Stripe testing is needed
+================================================================================

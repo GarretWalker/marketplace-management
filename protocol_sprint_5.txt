@@ -1,0 +1,92 @@
+================================================================================
+  SPRINT 5 — MANUAL PRODUCT MANAGEMENT
+================================================================================
+
+Read protocol_core.txt first. This file defines Sprint 5 scope only.
+
+GOAL: Merchants can add, edit, and manage products through the portal.
+
+================================================================================
+  SCOPE — ALLOWED FILES
+================================================================================
+
+  ✅ /portal: features/products/
+  ✅ /api: routes/product.*, controllers/product.*, services/product.*
+  ✅ /api: utils/slug.ts (already exists, extend if needed)
+  ❌ Consumer site, orders, integrations, Stripe
+
+================================================================================
+  REFERENCE FILES (read these for patterns, do NOT modify)
+================================================================================
+
+  - api/src/routes/chamber.routes.ts (route pattern)
+  - api/src/middleware/auth.middleware.ts (auth pattern)
+  - api/src/controllers/claim.controller.ts (controller pattern)
+  - api/src/services/claim.service.ts (service pattern)
+  - portal/src/app/features/claims/wizard/claim-wizard.component.ts (form pattern)
+
+================================================================================
+  API ENDPOINTS
+================================================================================
+
+  POST /api/products — create product (merchant only)
+  GET /api/products?merchant_id=X — list products with filtering/sorting/pagination
+  GET /api/products/:id — get single product
+  PUT /api/products/:id — update product
+  DELETE /api/products/:id — soft delete (set status='archived')
+  POST /api/products/:id/images — upload image(s) to Supabase Storage
+  PUT /api/products/:id/images/reorder — update display_order
+  DELETE /api/products/images/:imageId — delete image
+  PUT /api/products/:id/inventory — quick quantity update
+
+  All endpoints require auth + merchant role.
+  Merchants can only CRUD their own products.
+
+================================================================================
+  PORTAL UI
+================================================================================
+
+  Product List Page (merchant dashboard):
+    - Table with: image thumbnail, name, price, quantity, status
+    - Filter by: status, category
+    - Sort by: name, price, date added, quantity
+    - Quick actions: edit, archive
+
+  Add/Edit Product Form (keep it SIMPLE):
+    Main fields (always visible):
+      - Product name (required)
+      - Description (plain textarea — no rich text editor)
+      - Short description
+      - Category dropdown (fetch from existing categories table — already seeded)
+      - Price (required)
+      - Compare-at price (optional, for sale pricing)
+      - Quantity (required if tracking inventory)
+      - Low stock threshold (default 5)
+      - Image upload section
+      - Save as draft or publish button
+
+    "Advanced" expandable section:
+      - SKU
+      - Weight
+      - Tags
+
+  Image Upload:
+    - Multiple file input
+    - Display thumbnails after upload
+    - Set primary image (radio button or star icon)
+    - Delete individual images
+    - Number inputs for display order (NO drag and drop)
+    - Upload to Supabase Storage product-images bucket
+    - Path format: {merchant_id}/{product_id}/{filename}
+
+================================================================================
+  IMPORTANT NOTES
+================================================================================
+
+  - Categories already exist in database — just fetch for dropdown, no CRUD
+  - Auto-generate slug from product name, append number for collisions
+  - No network access on VPS — build upload service but it won't work
+    until tested locally. That's fine, flag in sprint report.
+  - Think Facebook Marketplace simplicity — big image area, minimal fields
+  - Do NOT add a rich text editor or drag-and-drop — keep it simple
+================================================================================

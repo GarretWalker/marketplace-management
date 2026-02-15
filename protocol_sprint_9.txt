@@ -1,0 +1,70 @@
+================================================================================
+  SPRINT 9 — SQUARE INTEGRATION
+================================================================================
+
+Read protocol_core.txt first. This file defines Sprint 9 scope only.
+
+GOAL: Merchants with Square POS connect and auto-import their catalog.
+
+================================================================================
+  SCOPE — ALLOWED FILES
+================================================================================
+
+  ✅ /portal: features/integrations/ (Square connection UI)
+  ✅ /api: services/integrations/square.*, webhooks/square.*
+  ✅ /api: routes/integration.*, controllers/integration.*
+  ❌ New features, consumer site changes
+
+================================================================================
+  REFERENCE FILES
+================================================================================
+
+  - api/src/services/integrations/shopify.* (same OAuth + sync pattern)
+  - api/src/services/integrations/chambermaster.service.ts (integration pattern)
+
+================================================================================
+  API ENDPOINTS
+================================================================================
+
+  GET /api/integrations/square/auth?merchant_id=X
+    - Redirect to Square OAuth consent screen
+
+  GET /api/integrations/square/callback
+    - Exchange code for access token
+    - Store in merchant_integrations table
+
+  POST /api/integrations/square/sync
+    - Fetch items via Square Catalog API
+    - Map to products schema
+    - Handle item variations (one Square item may = multiple products)
+    - Ask which location to sync from
+
+  POST /api/webhooks/square
+    - Verify webhook signature
+    - inventory.count.updated → update quantity
+    - catalog.version.updated → re-sync catalog
+
+================================================================================
+  PORTAL UI
+================================================================================
+
+  "Connect Square" in merchant dashboard:
+    - Same pattern as Shopify connection UI
+    - Location selector (Square uses locations)
+    - Sync status, last sync, product count
+    - "Sync Now" and "Disconnect" options
+
+  Square-synced product indicator:
+    - Badge/icon on product list
+    - Synced fields read-only
+
+================================================================================
+  IMPORTANT NOTES
+================================================================================
+
+  - Square items have "variations" similar to Shopify variants
+  - A single Square item may map to multiple products
+  - Square uses "locations" — must ask merchant which location to sync
+  - If no network access, build with mock service and flag in BLOCKERS.md
+  - All products still go through YOUR checkout with Stripe Connect
+================================================================================
