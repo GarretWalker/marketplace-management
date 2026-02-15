@@ -9,6 +9,8 @@ import { MerchantOnboardingComponent } from './features/merchants/onboarding/onb
 import { MerchantDashboardComponent } from './features/merchants/dashboard/dashboard.component';
 import { ClaimWizardComponent } from './features/claims/wizard/claim-wizard.component';
 import { ClaimsAdminComponent } from './features/claims/admin/claims-admin.component';
+import { ProductListComponent } from './features/products/components/product-list/product-list.component';
+import { ProductFormComponent } from './features/products/components/product-form/product-form.component';
 import { authGuard } from './core/auth/auth.guard';
 import { roleGuard } from './core/auth/role.guard';
 
@@ -21,6 +23,9 @@ export const routes: Routes = [
   { path: 'merchant/register', component: RegisterMerchantComponent },
   { path: 'merchant/onboarding', component: MerchantOnboardingComponent },
   { path: 'merchant/dashboard', component: MerchantDashboardComponent, canActivate: [authGuard] },
+  { path: 'merchant/products', component: ProductListComponent, canActivate: [roleGuard('merchant')] },
+  { path: 'merchant/products/new', component: ProductFormComponent, canActivate: [roleGuard('merchant')] },
+  { path: 'merchant/products/:id/edit', component: ProductFormComponent, canActivate: [roleGuard('merchant')] },
   
   // Claims Routes
   { path: 'claims/wizard', component: ClaimWizardComponent, canActivate: [authGuard] },

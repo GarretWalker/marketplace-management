@@ -233,7 +233,7 @@ export const chamberController = {
    * Used by the claim wizard to show available chambers to prospective merchants.
    * Only returns active chambers with minimal information (id, name, slug, location).
    */
-  async getAllActive(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getAllActive(_req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const chambers = await chamberService.getAllActive();
       res.json({ data: chambers, error: null });
