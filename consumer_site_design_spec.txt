@@ -1,0 +1,216 @@
+================================================================================
+  SHOP LOCAL MARKETPLACE — CONSUMER SITE DESIGN SPEC
+================================================================================
+
+Created: February 15, 2026
+Reference for: Sprint 6 (Consumer Marketplace) and Sprint 10 (Polish)
+
+================================================================================
+  DESIGN DIRECTION
+================================================================================
+
+Overall feel: Warm, community-focused, premium but approachable.
+NOT techy, NOT startup-y, NOT dark theme.
+Think: local farmers market meets modern e-commerce.
+Target users: Small-town Alabama shoppers, 25-65 age range.
+
+Inspiration: Coffee shop marketplace (Dribbble — warm cream, orange accent,
+serif headlines, clean product cards, community feel)
+
+================================================================================
+  COLOR PALETTE
+================================================================================
+
+Background:       Warm cream (#F5F0E8 range) — NOT stark white
+Text:             Dark charcoal/brown (#2D2A26 range)
+Accent (primary): Burnt orange/amber — buttons, CTAs, links
+Secondary:        Soft sage or muted green — badges, tags, secondary actions
+White:            Pure white (#FFFFFF) for solid product cards in grid views
+Error:            Standard red for form validation
+Success:          Muted green
+
+NOTE: The primary accent color is overridden per-chamber using the
+primary_color field from the chambers table. The burnt orange is the
+default/fallback. Each chamber can brand their accent to match their logo.
+
+================================================================================
+  TYPOGRAPHY
+================================================================================
+
+Headlines:        Bold serif font (e.g., Playfair Display, Lora, or similar)
+                  Used for: hero text, section headers, store names
+Body text:        Clean sans-serif (e.g., Inter, DM Sans, or similar)
+                  Used for: descriptions, prices, UI elements
+Product prices:   Bold sans-serif, slightly larger than body
+
+================================================================================
+  PAGE STRUCTURE — HOMEPAGE
+================================================================================
+
+1. NAVIGATION BAR (sticky)
+   - Chamber logo (left)
+   - Search bar (center)
+   - Category dropdown
+   - Cart icon with badge count (right)
+   - Simple, not cluttered — max 4-5 nav items
+
+2. HERO BANNER (full-width)
+   - Full-width photo of chamber's downtown/local landmark
+   - Image from: chambers.hero_image_url
+   - Dark gradient overlay (40-50% black) for text readability
+   - DO NOT rely on chamber to pick high-contrast photos — force overlay
+   - White text overlay:
+     - Chamber name or "Shop Local [City]" in large serif font
+     - Chamber tagline below in smaller sans-serif
+     - CTA button in accent color: "Browse Local Stores" or "Start Shopping"
+   - Chamber logo can appear in nav bar, not duplicated on hero
+
+3. FEATURED PRODUCTS (overlapping hero)
+   - 3-4 glassmorphism cards floating over bottom edge of hero
+   - Cards use frosted glass effect:
+     background: rgba(255, 255, 255, 0.7);
+     backdrop-filter: blur(10px);
+     border: 1px solid rgba(255, 255, 255, 0.3);
+     border-radius: 16px;
+     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+   - Each card: product image, name, price, store name
+   - These are the "wow factor" — first thing that catches the eye
+
+4. BROWSE BY CATEGORY (warm cream background starts here)
+   - Horizontal scroll or grid of category cards
+   - Each card: category image + label
+   - Uses the 14 seeded categories from database
+   - Cards can use subtle glassmorphism or solid with soft shadow
+
+5. FEATURED STORES / "Meet the Stores"
+   - Grid of merchant cards (3-4 per row)
+   - Each card: merchant logo/placeholder, business name, category, product count
+   - Warm, inviting — these are real local businesses, show personality
+   - "View All Stores" link
+
+6. STATS SECTION (optional)
+   - Glassmorphism or accent-colored bar
+   - "30+ Local Stores" | "500+ Products" | "Supporting [City] Since 2026"
+   - Builds credibility, especially when showing to other chambers
+
+7. FOOTER
+   - Chamber branding
+   - Links: About, Terms, Privacy, Contact
+   - "Powered by Shop Local" (your platform branding)
+
+================================================================================
+  PRODUCT CARDS (used throughout)
+================================================================================
+
+In hero/featured sections:
+  - Glassmorphism cards (frosted glass)
+  - Product image, name, price, store name
+  - Hover: subtle lift/scale animation
+
+In product grid pages:
+  - Solid white cards on cream background
+  - Soft shadow, rounded corners (12-16px border-radius)
+  - Product image (top, 1:1 or 4:3 ratio)
+  - Product name (bold)
+  - Store name (small, muted)
+  - Price (bold, accent color if on sale)
+  - Compare-at price with strikethrough if applicable
+  - Hover: subtle shadow increase or slight lift
+
+================================================================================
+  PRODUCT DETAIL PAGE
+================================================================================
+
+  - Large image gallery (main image + thumbnails)
+  - Product name in serif headline font
+  - Price prominent, compare-at price with strikethrough
+  - Description
+  - Quantity selector
+  - "Add to Cart" button (large, accent color)
+  - Store info card: merchant name, logo, "Visit Store" link
+  - Clean, generous whitespace — not cluttered
+
+================================================================================
+  STORE DIRECTORY PAGE
+================================================================================
+
+  - Grid of merchant cards
+  - Each: logo/placeholder, name, category, product count, short description
+  - Search/filter by category
+  - Cards link to individual store pages
+
+================================================================================
+  SINGLE STORE PAGE
+================================================================================
+
+  - Merchant banner/hero (merchant cover image or fallback)
+  - Merchant logo, name, category, description
+  - Grid of their products below
+  - Same product card style as browse pages
+
+================================================================================
+  SHOPPING CART
+================================================================================
+
+  - Clean, simple layout
+  - Item image, name, quantity adjuster, price, remove button
+  - Subtotal prominent
+  - "Proceed to Checkout" button in accent color
+  - Single-merchant constraint: warn if adding from different store
+
+================================================================================
+  GLASSMORPHISM USAGE GUIDE
+================================================================================
+
+USE glassmorphism for:
+  ✅ Featured product cards on hero section
+  ✅ Stats/counter bar
+  ✅ Category cards (subtle)
+  ✅ Floating UI elements over images
+
+DO NOT use glassmorphism for:
+  ❌ Full product grid (50+ cards — too noisy)
+  ❌ Forms and checkout (needs to be clean/functional)
+  ❌ Navigation bar
+  ❌ Text-heavy sections
+
+CSS template:
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+
+================================================================================
+  MOBILE RESPONSIVE REQUIREMENTS
+================================================================================
+
+  - Mobile-first design
+  - Hero banner scales, text remains readable
+  - Product grid: 2 columns on mobile, 3-4 on tablet/desktop
+  - Navigation collapses to hamburger menu + cart icon
+  - Search bar accessible from hamburger or sticky header
+  - Product cards stack cleanly
+  - Touch-friendly: 44px minimum tap targets
+  - Cart accessible from any page
+
+================================================================================
+  CHAMBER BRANDING INTEGRATION
+================================================================================
+
+Each chamber customizes the site using their database fields:
+  - chambers.name → hero text, nav bar, footer
+  - chambers.tagline → hero subtitle
+  - chambers.logo_url → nav bar logo
+  - chambers.hero_image_url → hero banner photo
+  - chambers.primary_color → accent color (buttons, links, CTAs)
+  - chambers.accent_color → secondary highlights
+
+If a field is empty, use sensible defaults:
+  - No hero image → gradient background in primary color
+  - No logo → text-only chamber name
+  - No primary color → burnt orange default
+  - No tagline → "Shop Local in [City]"
+
+================================================================================
