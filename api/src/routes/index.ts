@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import categoryRoutes from './category.routes';
 import chamberRoutes from './chamber.routes';
 import claimRoutes from './claim.routes';
 import merchantRoutes from './merchant.routes';
@@ -19,6 +20,7 @@ router.get('/health', (_req: Request, res: Response) => {
 });
 
 // Route modules
+router.use('/categories', categoryRoutes);
 router.use('/chambers', chamberRoutes);
 router.use('/claims', claimRoutes);
 router.use('/merchants', merchantRoutes);

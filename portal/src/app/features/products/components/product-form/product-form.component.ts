@@ -2,8 +2,9 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { ProductService } from '../../services/product.service';
-import { ChamberService } from '../../../chambers/services/chamber.service';
+import { environment } from '../../../../../environments/environment';
 
 interface Category {
   id: string;
@@ -282,8 +283,8 @@ export class ProductFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private http = inject(HttpClient);
   private productService = inject(ProductService);
-  private chamberService = inject(ChamberService);
 
   productForm!: FormGroup;
   isEditMode = false;
@@ -325,15 +326,18 @@ export class ProductFormComponent implements OnInit {
   }
 
   loadCategories(): void {
-    // Stub - fetch categories from chamber service or a categories endpoint
-    // For now, use hardcoded categories matching the seeded data
-    this.categories = [
-      { id: '1', name: 'Food & Beverage' },
-      { id: '2', name: 'Retail' },
-      { id: '3', name: 'Services' },
-      { id: '4', name: 'Arts & Crafts' },
-      { id: '5', name: 'Home & Garden' }
-    ];
+    this.http
+      .get<{ data: Category[]; error: any }>(`${environment.apiUrl}/categories`)
+      .subscribe({
+        next: (response) => {
+          if (response.data) {
+            this.categories = response.data;
+          }
+        },
+        error: (err) => {
+          console.error('Failed to load categories', err);
+        }
+      });
   }
 
   loadProduct(id: string): void {

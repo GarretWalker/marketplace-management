@@ -23,6 +23,10 @@ router.get('/:id', productController.get.bind(productController));
 // PUT /api/products/:id - Update product
 router.put('/:id', productController.update.bind(productController));
 
+// DELETE /api/products/images/:imageId - Delete image
+// NOTE: Must be above /:id to prevent Express matching "images" as an id param
+router.delete('/images/:imageId', productController.deleteImage.bind(productController));
+
 // DELETE /api/products/:id - Archive product
 router.delete('/:id', productController.delete.bind(productController));
 
@@ -31,9 +35,6 @@ router.post('/:id/images', productController.uploadImage.bind(productController)
 
 // PUT /api/products/:id/images/reorder - Reorder images
 router.put('/:id/images/reorder', productController.reorderImages.bind(productController));
-
-// DELETE /api/products/images/:imageId - Delete image
-router.delete('/images/:imageId', productController.deleteImage.bind(productController));
 
 // PUT /api/products/:id/inventory - Quick inventory update
 router.put('/:id/inventory', productController.updateInventory.bind(productController));
