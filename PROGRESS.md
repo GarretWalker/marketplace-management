@@ -1,20 +1,20 @@
 # Sprint 5 Progress — Manual Product Management
 
 ## Current Status
-🔨 In Progress - API Layer
+🔨 In Progress - Frontend (Portal)
 
 ## Completed Steps
 - [x] Read protocol_core.txt
 - [x] Read protocol_sprint_5.txt
 - [x] Pulled latest main
 - [x] On feature/sprint-5-product-catalog branch
-- [ ] Create product types
-- [ ] Create product service
-- [ ] Create product controller
-- [ ] Create product routes
-- [ ] Register routes in index.ts
-- [ ] Test API build
-- [ ] Commit API layer
+- [x] Create product types
+- [x] Create product service
+- [x] Create product controller
+- [x] Create product routes
+- [x] Register routes in index.ts
+- [x] Test API build
+- [x] Commit API layer
 - [ ] Create portal product list page
 - [ ] Create portal add/edit form
 - [ ] Create portal product service
