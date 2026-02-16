@@ -28,14 +28,16 @@ GOAL: Merchants connect Stripe accounts to receive payments.
   API ENDPOINTS
 ================================================================================
 
-  POST /api/stripe/onboard
-    - Create Stripe Express connected account
-    - Return Stripe onboarding URL (Account Links API)
-    - Merchant redirects to Stripe hosted onboarding
+  GET /api/stripe/connect
+    - Generate Stripe OAuth authorization URL
+    - Redirect merchant to Stripe's OAuth consent screen
+    - Merchants with existing Stripe accounts authorize access
+    - Merchants without Stripe create an account during the flow
 
   GET /api/stripe/callback
-    - Handle return from Stripe onboarding
-    - Update merchant.stripe_account_id
+    - Handle OAuth redirect from Stripe
+    - Exchange authorization code for stripe_user_id
+    - Store stripe_account_id on merchant record
     - Update merchant.stripe_onboarding_complete
 
   POST /api/stripe/webhook
@@ -69,7 +71,9 @@ GOAL: Merchants connect Stripe accounts to receive payments.
   IMPORTANT NOTES
 ================================================================================
 
-  - Use Stripe Express accounts, not Standard
+  - Use Stripe Standard connected accounts (NOT Express)
+  - Standard allows merchants to connect existing Stripe accounts via OAuth
+  - Merchants without Stripe create one during the OAuth flow
   - Use Stripe TEST MODE keys (sk_test_*)
   - All Stripe API calls happen server-side only
   - Webhook endpoint MUST verify Stripe signature
